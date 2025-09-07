@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import type { Task, Member, TaskStatus } from "@/lib/types";
 import { MemberCombobox } from "../shared/MemberCombobox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface AddTaskDialogProps {
   isOpen: boolean;
