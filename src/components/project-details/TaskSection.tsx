@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlusCircle, Filter, FileDown } from "lucide-react";
+import { PlusCircle, Filter, FileDown, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Project, Task, Member, TaskStatus } from "@/lib/types";
 import { TaskList } from "./TaskList";
@@ -18,6 +18,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { DependencyAlert } from "./DependencyAlert";
 import { logStore } from "@/lib/log-store";
+import { summarizeProject } from "@/ai/flows/summarizeProjectFlow";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { ProjectReport } from "./ProjectReport";
 
 interface TaskSectionProps {
   initialProject: Project;
@@ -33,6 +37,7 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const [parentForNewSubtask, setParentForNewSubtask] = useState<string | undefined>(undefined);
   const [statusFilters, setStatusFilters] = useState<Set<TaskStatus>>(new Set());
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
   const { toast } = useToast();
 
 
@@ -226,10 +231,86 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
     toast({ title: "CSV Exported", description: `Log for project "${project.name}" has been downloaded.` });
   }
 
+  const exportToPDF = async () => {
+    setIsPdfLoading(true);
+    try {
+        const blockedTasks = project.tasks.filter(task => {
+            if (!task.dependencyId) return false;
+            const dependency = project.tasks.find(d => d.id === task.dependencyId);
+            return dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP');
+        }).map(task => {
+            const dependency = project.tasks.find(d => d.id === task.dependencyId)!;
+            const assignedToDependency = allMembers
+                .filter(m => dependency.assignedTo.includes(m.id))
+                .map(m => m.name)
+                .join(", ");
+            return `"${task.name}" is blocked by "${dependency.name}" (assigned to: ${assignedToDependency})`;
+        });
+
+        const taskStatuses = project.tasks.map(t => t.status);
+
+        const aiSummary = await summarizeProject({
+            projectName: project.name,
+            projectStage: project.stage,
+            taskStatuses: taskStatuses,
+            blockedTasks: blockedTasks,
+        });
+
+        const reportRoot = document.createElement('div');
+        reportRoot.style.position = 'absolute';
+        reportRoot.style.left = '-9999px';
+        document.body.appendChild(reportRoot);
+        
+        const { unmount } = await new Promise<any>((resolve) => {
+          const c = (
+            <ProjectReport 
+              project={project} 
+              allMembers={allMembers}
+              aiSummary={aiSummary} 
+              onRendered={() => resolve({ unmount: () => {} })} // Simplified unmount
+            />
+          );
+          
+          const ReactDOM = require('react-dom');
+          ReactDOM.render(c, reportRoot);
+        });
+
+        const reportElement = reportRoot.children[0] as HTMLElement;
+        const canvas = await html2canvas(reportElement, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`project_summary_${project.name.replace(/\s+/g, '_')}.pdf`);
+        
+        document.body.removeChild(reportRoot);
+
+        toast({ title: "PDF Exported", description: "Project summary has been downloaded."});
+    } catch(e) {
+        console.error("PDF Export Error: ", e);
+        toast({ title: "Export Failed", description: "Could not generate PDF report.", variant: "destructive"});
+    } finally {
+        setIsPdfLoading(false);
+    }
+  }
+
   return (
     <div>
       <DependencyAlert allTasks={project.tasks} allMembers={allMembers} />
       <div className="flex items-center justify-end gap-2 mb-6">
+        <Button variant="outline" onClick={exportToPDF} disabled={isPdfLoading}>
+            {isPdfLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+                <FileText className="mr-2 h-4 w-4" />
+            )}
+            Export PDF
+        </Button>
         <Button variant="outline" onClick={exportToCSV}>
             <FileDown className="mr-2 h-4 w-4" />
             Export CSV
