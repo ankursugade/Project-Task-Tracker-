@@ -16,6 +16,7 @@ import {
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { DependencyAlert } from "./DependencyAlert";
 
 interface TaskSectionProps {
   initialProject: Project;
@@ -114,7 +115,8 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
 
   return (
     <div>
-        <div className="flex items-center justify-end gap-2 mb-6">
+      <DependencyAlert allTasks={project.tasks} allMembers={allMembers} />
+      <div className="flex items-center justify-end gap-2 mb-6">
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">

@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil } from "lucide-react";
+import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2 } from "lucide-react";
 import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PROJECTS } from "@/lib/data";
@@ -37,7 +37,9 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
   const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === task.id)) : undefined;
 
   const dependencyTask = task.dependencyId ? allTasks.find(t => t.id === task.dependencyId) : undefined;
-  const isHighlighted = dependencyTask && (dependencyTask.status === "OPEN" || dependencyTask.status === "WIP");
+  const isBlocked = dependencyTask && (dependencyTask.status === "OPEN" || dependencyTask.status === "WIP");
+
+  const isBlocking = allTasks.some(t => t.dependencyId === task.id && t.status !== 'CLOSED');
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     onTaskUpdate({ ...task, status: newStatus });
@@ -45,7 +47,8 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
 
   return (
     <Card className={cn("transition-all duration-300 relative", 
-        isHighlighted && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800"
+        isBlocked && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800",
+        isBlocking && "bg-purple-50 border-purple-400 ring-2 ring-purple-200 dark:bg-purple-950 dark:border-purple-700 dark:ring-purple-800"
     )}>
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -86,6 +89,21 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                 <GitCommitHorizontal className="h-4 w-4" />
                 <span>{subtaskCount} sub-tasks</span>
               </div>
+            )}
+             {dependencyTask && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="flex items-center gap-2">
+                        <Link2 className="h-4 w-4"/>
+                        <span>Depends on "{dependencyTask.name}"</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Dependency Status: <StatusBadge status={dependencyTask.status} />
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
