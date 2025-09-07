@@ -61,11 +61,25 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
   });
 
   const handleTaskAdd = (newTask: Task) => {
+    let finalTask = { ...newTask };
+    const coreTasks = project.tasks.filter(t => !t.parentId);
+
+    if (newTask.parentId) {
+      // It's a sub-task
+      const parentTask = project.tasks.find(t => t.id === newTask.parentId);
+      const parentNumber = coreTasks.findIndex(ct => ct.id === parentTask?.id) + 1;
+      const subTaskCount = project.tasks.filter(t => t.parentId === newTask.parentId).length;
+      finalTask.name = `${parentNumber}.${subTaskCount + 1}. ${newTask.name}`;
+    } else {
+      // It's a core task
+      finalTask.name = `${coreTasks.length + 1}. ${newTask.name}`;
+    }
+
     setProject((prev) => ({
       ...prev,
-      tasks: [newTask, ...prev.tasks],
+      tasks: [finalTask, ...prev.tasks],
     }));
-    toast({ title: "Task Created", description: `Task "${newTask.name}" has been successfully added.` });
+    toast({ title: "Task Created", description: `Task "${finalTask.name}" has been successfully added.` });
   };
 
   const handleTaskUpdate = (updatedTask: Task) => {

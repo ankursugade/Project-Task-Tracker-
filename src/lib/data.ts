@@ -21,18 +21,20 @@ const generateTasksForProject = (projectIndex: number): Task[] => {
   const statuses: TaskStatus[] = ['OPEN', 'WIP', 'CLOSED'];
   let parentId: string | undefined = undefined;
   let coreTaskCounter = 0;
+  let subTaskCounter = 1;
 
   for (let i = 0; i < 30; i++) {
     const taskId = `t${projectIndex}-${i + 1}`;
     let taskName = "";
     
-    // Every 5th task is a core task, the rest are its sub-tasks
     if (i % 5 === 0) {
         parentId = taskId;
         coreTaskCounter++;
-        taskName = `Core Task ${coreTaskCounter}`;
+        taskName = `Core Task`;
+        subTaskCounter = 1;
     } else {
-        taskName = `Sub-task ${coreTaskCounter}.${i % 5}`;
+        taskName = `Sub-task`;
+        subTaskCounter++;
     }
 
     const status = statuses[i % statuses.length];
@@ -43,7 +45,6 @@ const generateTasksForProject = (projectIndex: number): Task[] => {
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + Math.floor(Math.random() * 10) + 2); // End date is 2-12 days after start
 
-    // Assign 1 to 4 random members
     const assignedToCount = Math.floor(Math.random() * 4) + 1;
     const assignedTo: string[] = [];
     const memberIdsCopy = [...MEMBERS.map(m => m.id)];
@@ -54,7 +55,6 @@ const generateTasksForProject = (projectIndex: number): Task[] => {
 
     const assignedBy = MEMBERS[Math.floor(Math.random() * MEMBERS.length)].id;
     
-    // A sub-task can depend on the previous sub-task or the parent task
     const dependencyId = i > 0 && i % 5 !== 1 ? `t${projectIndex}-${i}` : undefined;
 
     tasks.push({
@@ -70,6 +70,17 @@ const generateTasksForProject = (projectIndex: number): Task[] => {
       parentId: (i % 5 !== 0) ? parentId : undefined,
     });
   }
+  
+  // Add numbering
+  const coreTasks = tasks.filter(t => !t.parentId);
+  coreTasks.forEach((coreTask, index) => {
+    coreTask.name = `${index + 1}. ${coreTask.name}`;
+    const subTasks = tasks.filter(t => t.parentId === coreTask.id);
+    subTasks.forEach((subTask, subIndex) => {
+      subTask.name = `${index + 1}.${subIndex + 1}. ${subTask.name}`;
+    });
+  });
+
   return tasks;
 };
 

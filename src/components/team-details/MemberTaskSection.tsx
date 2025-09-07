@@ -46,16 +46,40 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
   }; 
 
   const handleTaskAdd = (newTask: Task) => {
+    let finalTask = { ...newTask };
+    const allTasks = tasksByProject.flatMap(p => p.tasks);
+
+    // Find the project this task belongs to
+    const projectIndex = tasksByProject.findIndex(p => p.project.id === taskToEdit?.id || p.tasks.some(t => t.id === newTask.parentId));
+    
+    if (projectIndex === -1) {
+        toast({title: "Error", description: "Could not find project for this task.", variant: "destructive"});
+        return;
+    }
+
+    const projectTasks = tasksByProject[projectIndex].tasks;
+    const coreTasks = projectTasks.filter(t => !t.parentId);
+
+    if (newTask.parentId) {
+      // It's a sub-task
+      const parentTask = projectTasks.find(t => t.id === newTask.parentId);
+      const parentNumberString = parentTask?.name.split('.')[0];
+      const parentNumber = parentNumberString ? parseInt(parentNumberString, 10) : coreTasks.length;
+      const subTaskCount = projectTasks.filter(t => t.parentId === newTask.parentId).length;
+      finalTask.name = `${parentNumber}.${subTaskCount + 1}. ${newTask.name}`;
+    } else {
+      // It's a core task - this case should ideally not happen from member view, but as a fallback
+      finalTask.name = `${coreTasks.length + 1}. ${newTask.name}`;
+    }
+
+
     setTasksByProject(prev => {
-        const projectIndex = prev.findIndex(p => p.tasks.some(t => t.id === newTask.parentId));
-        if (projectIndex > -1) {
-            const newTasksByProject = [...prev];
-            newTasksByProject[projectIndex].tasks.push(newTask);
-            return newTasksByProject;
-        }
-        return prev;
+        const newTasksByProject = [...prev];
+        newTasksByProject[projectIndex].tasks.push(finalTask);
+        return newTasksByProject;
     });
-    toast({ title: "Task Created", description: `Task "${newTask.name}" has been successfully added.` });
+
+    toast({ title: "Task Created", description: `Task "${finalTask.name}" has been successfully added.` });
   };
 
   const handleEditClick = (task: Task) => {
