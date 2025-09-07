@@ -1,0 +1,86 @@
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MEMBERS } from "@/lib/data";
+import type { Project } from "@/lib/types";
+import { StatusBadge } from "../shared/StatusBadge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface ProjectCardProps {
+  project: Project;
+}
+
+export function ProjectCard({ project }: ProjectCardProps) {
+  const { name, stage, tasks, projectLead, designCaptain } = project;
+  const completedTasks = tasks.filter((task) => task.status === "CLOSED").length;
+  const progress = tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0;
+
+  const lead = MEMBERS.find((m) => m.id === projectLead);
+  const captain = MEMBERS.find((m) => m.id === designCaptain);
+
+  return (
+    <Card className="flex flex-col h-full transition-shadow duration-300 hover:shadow-lg">
+      <Link href={`/projects/${project.id}`} className="flex flex-col flex-grow">
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <CardTitle className="font-headline group-hover:text-primary">
+              {name}
+            </CardTitle>
+            <StatusBadge status={stage} />
+          </div>
+          <CardDescription>{tasks.length} tasks</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm text-muted-foreground">Progress</span>
+              <span className="text-sm font-semibold">{Math.round(progress)}%</span>
+            </div>
+            <Progress value={progress} aria-label={`${Math.round(progress)}% complete`} />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <div className="flex items-center justify-between w-full">
+            <span className="text-xs text-muted-foreground">Team</span>
+            <div className="flex -space-x-2">
+              {lead && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Avatar className="border-2 border-background">
+                        <AvatarImage src={lead.avatarUrl} alt={lead.name} />
+                        <AvatarFallback>{lead.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent>Project Lead: {lead.name}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              {captain && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Avatar className="border-2 border-background">
+                        <AvatarImage src={captain.avatarUrl} alt={captain.name} />
+                        <AvatarFallback>{captain.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent>Design Captain: {captain.name}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          </div>
+        </CardFooter>
+      </Link>
+    </Card>
+  );
+}
