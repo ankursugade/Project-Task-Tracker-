@@ -68,12 +68,34 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
   };
 
   const handleTaskUpdate = (updatedTask: Task) => {
-    setProject((prev) => ({
-      ...prev,
-      tasks: prev.tasks.map(t => t.id === updatedTask.id ? updatedTask : t),
-    }));
+    setProject((prev) => {
+      let newTasks = [...prev.tasks];
+      const isCoreTask = !updatedTask.parentId;
+      const originalTask = newTasks.find(t => t.id === updatedTask.id);
+
+      // If a core task is being closed, close all its sub-tasks
+      if (isCoreTask && updatedTask.status === 'CLOSED' && originalTask?.status !== 'CLOSED') {
+        newTasks = newTasks.map(t => {
+          if (t.id === updatedTask.id) {
+            return updatedTask; // Update the core task itself
+          }
+          if (t.parentId === updatedTask.id) {
+            return { ...t, status: 'CLOSED' as TaskStatus }; // Close sub-tasks
+          }
+          return t;
+        });
+      } else {
+        newTasks = newTasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+      }
+
+      return {
+        ...prev,
+        tasks: newTasks,
+      };
+    });
     toast({ title: "Task Updated", description: `Task "${updatedTask.name}" has been successfully updated.` });
   };
+
 
   const handleEditClick = (task: Task) => {
     setTaskToEdit(task);
