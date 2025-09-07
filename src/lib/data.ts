@@ -1,6 +1,6 @@
 
 import type { Member, Project, Task, ProjectStage, TaskStatus } from '@/lib/types';
-import { addDays, isSaturday, isSunday } from 'date-fns';
+import { addDays, isSaturday, isSunday, startOfDay } from 'date-fns';
 
 // =================================================================================
 // UTILITY TO CALCULATE END DATE BASED ON WORKING DAYS
@@ -132,7 +132,7 @@ const generateTasksForProject = (projectIndex: number, projectStartDate: Date): 
         const coreTaskId = `t${projectIndex}-${taskCounter++}`;
         const coreTaskName = `${coreTaskNumber}. ${coreTaskInfo.name}`;
         
-        let coreTaskStartDate = addDays(projectStartDate, currentDayOffset);
+        let coreTaskStartDate = addDays(startOfDay(projectStartDate), currentDayOffset);
         // Ensure start date is not on a weekend
         while(isSaturday(coreTaskStartDate) || isSunday(coreTaskStartDate)) {
             coreTaskStartDate = addDays(coreTaskStartDate, 1);
@@ -160,7 +160,7 @@ const generateTasksForProject = (projectIndex: number, projectStartDate: Date): 
             const subTaskId = `t${projectIndex}-${taskCounter++}`;
             const subTaskName = `${coreTaskNumber}.${subTaskNumber}. ${subTaskInfo.name}`;
             
-            let subTaskStartDate = addDays(coreTaskStartDate, subIndex % 2); // Stagger sub-tasks a bit
+            let subTaskStartDate = addDays(startOfDay(coreTaskStartDate), subIndex % 2); // Stagger sub-tasks a bit
              while(isSaturday(subTaskStartDate) || isSunday(subTaskStartDate)) {
                 subTaskStartDate = addDays(subTaskStartDate, 1);
             }
@@ -217,7 +217,7 @@ const projectStages: ProjectStage[] = ['Pitch', 'Design', 'Construction', 'Hando
 
 export const PROJECTS: Project[] = Array.from({ length: 6 }, (_, i) => {
   const projectIndex = i + 1;
-  const projectStartDate = new Date();
+  const projectStartDate = startOfDay(new Date());
   projectStartDate.setDate(projectStartDate.getDate() + i * 7); // Stagger project start dates by a week
 
   return {
