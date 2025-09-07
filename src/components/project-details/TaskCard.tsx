@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -33,11 +34,12 @@ interface TaskCardProps {
   isSubTask?: boolean;
   isAccordionTrigger?: boolean;
   hideDescription?: boolean;
+  overrideAssignedMembers?: Member[];
 }
 
-export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isSubTask = false, isAccordionTrigger = false, hideDescription = false }: TaskCardProps) {
+export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isSubTask = false, isAccordionTrigger = false, hideDescription = false, overrideAssignedMembers }: TaskCardProps) {
   const [changedBy, setChangedBy] = useState("");
-  const assignedMembers = allMembers.filter(m => task.assignedTo.includes(m.id));
+  const assignedMembers = overrideAssignedMembers ?? allMembers.filter(m => task.assignedTo.includes(m.id));
   const assigner = allMembers.find(m => m.id === task.assignedBy);
 
   const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === task.id)) : undefined;

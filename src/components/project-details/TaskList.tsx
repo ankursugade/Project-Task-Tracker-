@@ -69,6 +69,12 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
 
         const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === coreTask.id)) : undefined;
 
+        const uniqueSubtaskMembers = hasSubtasks 
+          ? allMembers.filter(member => 
+              new Set(subTasks.flatMap(st => st.assignedTo)).has(member.id)
+            )
+          : [];
+
         return (
             <AccordionItem value={coreTask.id} key={coreTask.id} className="border-none">
               <Card className="data-[state=open]:rounded-b-none transition-all">
@@ -111,6 +117,7 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
                            showProjectName={showProjectName}
                            isSubTask={false}
                            hideDescription={true}
+                           overrideAssignedMembers={uniqueSubtaskMembers}
                         />
                      </div>
                      {hasSubtasks && (
