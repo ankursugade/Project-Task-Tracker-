@@ -68,6 +68,7 @@ const generateTasksForProject = (projectIndex: number): Task[] => {
       assignedBy,
       dependencyId: status !== 'CLOSED' ? dependencyId : undefined,
       parentId: (i % 5 !== 0) ? parentId : undefined,
+      revision: 0,
     });
   }
   

@@ -62,7 +62,7 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
   });
 
   const handleTaskAdd = (newTask: Task) => {
-    let finalTask = { ...newTask };
+    let finalTask = { ...newTask, revision: 0 };
     const coreTasks = project.tasks.filter(t => !t.parentId);
 
     if (newTask.parentId) {
@@ -88,16 +88,23 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
     const originalTask = newTasks.find(t => t.id === updatedTask.id);
 
     if (!originalTask) return;
+    
+    let finalUpdatedTask = { ...updatedTask };
 
-    const statusChanged = originalTask.status !== updatedTask.status;
+    const statusChanged = originalTask.status !== finalUpdatedTask.status;
+
+    // Increment revision if a closed task is reopened
+    if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
+        finalUpdatedTask.revision = (originalTask.revision || 0) + 1;
+    }
 
     // Rule 1: Prevent closing a blocked task
-    if (updatedTask.status === 'CLOSED' && updatedTask.dependencyId) {
-        const dependency = newTasks.find(t => t.id === updatedTask.dependencyId);
+    if (finalUpdatedTask.status === 'CLOSED' && finalUpdatedTask.dependencyId) {
+        const dependency = newTasks.find(t => t.id === finalUpdatedTask.dependencyId);
         if (dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP')) {
             toast({
                 title: "Action Blocked",
-                description: `Cannot close "${updatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
+                description: `Cannot close "${finalUpdatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
                 variant: "destructive",
             });
             return; // Abort update
@@ -105,13 +112,13 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
     }
     
     // Update the task itself
-    newTasks = newTasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+    newTasks = newTasks.map(t => t.id === finalUpdatedTask.id ? finalUpdatedTask : t);
 
     // Rule 2: If a core task is being closed, close all its sub-tasks
-    const isCoreTask = !updatedTask.parentId;
-    if (isCoreTask && updatedTask.status === 'CLOSED' && originalTask.status !== 'CLOSED') {
+    const isCoreTask = !finalUpdatedTask.parentId;
+    if (isCoreTask && finalUpdatedTask.status === 'CLOSED' && originalTask.status !== 'CLOSED') {
         newTasks = newTasks.map(t => {
-            if (t.parentId === updatedTask.id && t.status !== 'CLOSED') {
+            if (t.parentId === finalUpdatedTask.id && t.status !== 'CLOSED') {
                 logStore.add({
                     taskId: t.id,
                     taskName: t.name,
@@ -128,8 +135,8 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
     }
 
     // Rule 3: If a dependency is reopened, reopen dependent tasks
-    if (originalTask.status === 'CLOSED' && (updatedTask.status === 'OPEN' || updatedTask.status === 'WIP')) {
-        const dependentTasks = newTasks.filter(t => t.dependencyId === updatedTask.id);
+    if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
+        const dependentTasks = newTasks.filter(t => t.dependencyId === finalUpdatedTask.id);
         dependentTasks.forEach(depTask => {
             if (depTask.status === 'CLOSED') {
                 newTasks = newTasks.map(t => {
@@ -143,7 +150,8 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
                             newStatus: 'OPEN',
                             changedBy: changedById,
                         });
-                        return { ...t, status: 'OPEN' as TaskStatus };
+                        const newRevision = (t.revision || 0) + 1;
+                        return { ...t, status: 'OPEN' as TaskStatus, revision: newRevision };
                     }
                     return t;
                 });
@@ -158,14 +166,14 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
             projectId: project.id,
             projectName: project.name,
             previousStatus: originalTask.status,
-            newStatus: updatedTask.status,
+            newStatus: finalUpdatedTask.status,
             changedBy: changedById,
         });
     }
 
     setProject(prev => ({ ...prev, tasks: newTasks }));
 
-    toast({ title: "Task Updated", description: `Task "${updatedTask.name}" has been successfully updated.` });
+    toast({ title: "Task Updated", description: `Task "${finalUpdatedTask.name}" has been successfully updated.` });
   };
 
 
@@ -287,4 +295,3 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
     </div>
   );
 }
-

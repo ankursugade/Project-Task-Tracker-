@@ -108,6 +108,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
       assignedBy,
       dependencyId: dependencyId || undefined,
       parentId: isSubtask ? parentId : undefined,
+      revision: 0,
     };
 
     onTaskAdd(newTask);

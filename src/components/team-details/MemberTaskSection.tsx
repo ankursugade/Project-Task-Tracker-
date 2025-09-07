@@ -50,27 +50,32 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
 
     if (!originalTask) return;
 
-    const statusChanged = originalTask.status !== updatedTask.status;
+    let finalUpdatedTask = { ...updatedTask };
+    const statusChanged = originalTask.status !== finalUpdatedTask.status;
+
+    if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
+        finalUpdatedTask.revision = (originalTask.revision || 0) + 1;
+    }
 
     // Rule 1: Prevent closing a blocked task
-    if (updatedTask.status === 'CLOSED' && updatedTask.dependencyId) {
-        const dependency = allTasks.find(t => t.id === updatedTask.dependencyId);
+    if (finalUpdatedTask.status === 'CLOSED' && finalUpdatedTask.dependencyId) {
+        const dependency = allTasks.find(t => t.id === finalUpdatedTask.dependencyId);
         if (dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP')) {
             toast({
                 title: "Action Blocked",
-                description: `Cannot close "${updatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
+                description: `Cannot close "${finalUpdatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
                 variant: "destructive",
             });
             return;
         }
     }
     
-    newTasks = newTasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+    newTasks = newTasks.map(t => t.id === finalUpdatedTask.id ? finalUpdatedTask : t);
 
     // Rule 2: If a core task is being closed, close all its sub-tasks
-    if (!updatedTask.parentId && updatedTask.status === 'CLOSED' && originalTask.status !== 'CLOSED') {
+    if (!finalUpdatedTask.parentId && finalUpdatedTask.status === 'CLOSED' && originalTask.status !== 'CLOSED') {
         newTasks = newTasks.map(t => {
-            if (t.parentId === updatedTask.id && t.status !== 'CLOSED') {
+            if (t.parentId === finalUpdatedTask.id && t.status !== 'CLOSED') {
                  logStore.add({
                     taskId: t.id, taskName: t.name, projectId: project.project.id, projectName: project.project.name,
                     previousStatus: t.status, newStatus: 'CLOSED', changedBy: changedById,
@@ -82,8 +87,8 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
     }
 
     // Rule 3: If a dependency is reopened, reopen dependent tasks
-    if (originalTask.status === 'CLOSED' && (updatedTask.status === 'OPEN' || updatedTask.status === 'WIP')) {
-        const dependentTasks = allTasks.filter(t => t.dependencyId === updatedTask.id);
+    if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
+        const dependentTasks = allTasks.filter(t => t.dependencyId === finalUpdatedTask.id);
         dependentTasks.forEach(depTask => {
              const depTaskProjectIndex = tasksByProject.findIndex(p => p.tasks.some(t => t.id === depTask.id));
              if (depTaskProjectIndex === -1) return;
@@ -97,7 +102,8 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
                             taskId: t.id, taskName: t.name, projectId: targetProject.project.id, projectName: targetProject.project.name,
                             previousStatus: 'CLOSED', newStatus: 'OPEN', changedBy: changedById,
                         });
-                        return { ...t, status: 'OPEN' };
+                        const newRevision = (t.revision || 0) + 1;
+                        return { ...t, status: 'OPEN', revision: newRevision };
                     }
                     return t;
                 });
@@ -110,7 +116,7 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
     if (statusChanged) {
         logStore.add({
             taskId: originalTask.id, taskName: originalTask.name, projectId: project.project.id, projectName: project.project.name,
-            previousStatus: originalTask.status, newStatus: updatedTask.status, changedBy: changedById,
+            previousStatus: originalTask.status, newStatus: finalUpdatedTask.status, changedBy: changedById,
         });
     }
     
@@ -120,12 +126,12 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
         return newProjects;
     });
 
-    toast({ title: "Task Updated", description: `Task "${updatedTask.name}" has been successfully updated.` });
+    toast({ title: "Task Updated", description: `Task "${finalUpdatedTask.name}" has been successfully updated.` });
   }; 
 
 
   const handleTaskAdd = (newTask: Task) => {
-    let finalTask = { ...newTask };
+    let finalTask = { ...newTask, revision: 0 };
     const allTasks = tasksByProject.flatMap(p => p.tasks);
 
     // Find the project this task belongs to
@@ -321,4 +327,3 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
     </div>
   );
 }
-

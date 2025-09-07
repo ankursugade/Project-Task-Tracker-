@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2, GitBranch, ChevronsUpDown } from "lucide-react";
+import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2, GitBranch, ChevronsUpDown, GitPullRequest } from "lucide-react";
 import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PROJECTS } from "@/lib/data";
@@ -22,6 +22,7 @@ import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Label } from '../ui/label';
 import { MemberCombobox } from '../shared/MemberCombobox';
+import { Badge } from '../ui/badge';
 
 interface TaskCardProps {
   task: Task;
@@ -82,6 +83,19 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                       </Tooltip>
                     </TooltipProvider>
                   }
+                  {task.revision && task.revision > 0 && (
+                     <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Badge variant="destructive" className="flex items-center gap-1 bg-red-500/10 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-500/20">
+                                <GitPullRequest className="h-3 w-3" />
+                                R{task.revision}
+                            </Badge>
+                           </TooltipTrigger>
+                           <TooltipContent>Revision {task.revision}</TooltipContent>
+                        </Tooltip>
+                     </TooltipProvider>
+                  )}
                   <StatusBadge status={task.status} />
                   {isAccordionTrigger && <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />}
               </div>
