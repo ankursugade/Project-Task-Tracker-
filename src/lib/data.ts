@@ -43,17 +43,16 @@ const generateTasksForProject = (projectIndex: number): Task[] => {
     startDate.setDate(startDate.getDate() + (projectIndex * 30) + i);
     
     const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + Math.floor(Math.random() * 10) + 2); // End date is 2-12 days after start
+    endDate.setDate(startDate.getDate() + (i % 7) + 2); // End date is 2-9 days after start, deterministic
 
-    const assignedToCount = Math.floor(Math.random() * 4) + 1;
+    const assignedToCount = (i % 4) + 1; // Deterministic count
     const assignedTo: string[] = [];
-    const memberIdsCopy = [...MEMBERS.map(m => m.id)];
     for(let j = 0; j < assignedToCount; j++) {
-        const randomIndex = Math.floor(Math.random() * memberIdsCopy.length);
-        assignedTo.push(memberIdsCopy.splice(randomIndex, 1)[0]);
+        const memberIndex = (projectIndex + i + j) % MEMBERS.length;
+        assignedTo.push(MEMBERS[memberIndex].id);
     }
 
-    const assignedBy = MEMBERS[Math.floor(Math.random() * MEMBERS.length)].id;
+    const assignedBy = MEMBERS[(projectIndex + i) % MEMBERS.length].id;
     
     const dependencyId = i > 0 && i % 5 !== 1 ? `t${projectIndex}-${i}` : undefined;
 
