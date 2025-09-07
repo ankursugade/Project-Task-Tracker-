@@ -21,8 +21,8 @@ import { cn } from "@/lib/utils";
 import type { Task, Member } from "@/lib/types";
 import { MemberCombobox } from "../shared/MemberCombobox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { TaskCombobox } from "../shared/TaskCombobox";
 
 interface EditTaskDialogProps {
   isOpen: boolean;
@@ -166,14 +166,12 @@ export function EditTaskDialog({ isOpen, setIsOpen, onTaskUpdate, allMembers, pr
             </div>
             <div className="space-y-2">
               <Label>Dependency</Label>
-              <Select onValueChange={setDependencyId} value={dependencyId}>
-                <SelectTrigger><SelectValue placeholder="Optional: Select dependent task" /></SelectTrigger>
-                <SelectContent>
-                  {projectTasks.filter(t => t.id !== taskToEdit.id).map(task => (
-                    <SelectItem key={task.id} value={task.id}>{task.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <TaskCombobox 
+                    tasks={projectTasks.filter(t => t.id !== taskToEdit.id)}
+                    selectedTask={dependencyId}
+                    setSelectedTask={setDependencyId}
+                    placeholder="Optional: Select dependent task"
+                />
             </div>
         </div>
         <DialogFooter>

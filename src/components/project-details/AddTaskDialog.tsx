@@ -24,6 +24,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { TaskCombobox } from "../shared/TaskCombobox";
 
 interface AddTaskDialogProps {
   isOpen: boolean;
@@ -204,14 +205,12 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
             </div>
             <div className="space-y-2">
               <Label>Dependency</Label>
-              <Select onValueChange={setDependencyId}>
-                <SelectTrigger><SelectValue placeholder="Optional: Select dependent task" /></SelectTrigger>
-                <SelectContent>
-                  {projectTasks.map(task => (
-                    <SelectItem key={task.id} value={task.id}>{task.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <TaskCombobox 
+                tasks={projectTasks} 
+                selectedTask={dependencyId}
+                setSelectedTask={setDependencyId}
+                placeholder="Optional: Select dependent task"
+              />
             </div>
         </div>
         <DialogFooter>
