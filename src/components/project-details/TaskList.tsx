@@ -8,11 +8,12 @@ interface TaskListProps {
   allTasks: Task[];
   allMembers: Member[];
   onTaskUpdate: (task: Task) => void;
-  onTaskAdd: (task: Task) => void;
+  onSubtaskAdd: (parentId: string) => void;
+  onEdit: (task: Task) => void;
   showProjectName?: boolean;
 }
 
-export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onTaskAdd, showProjectName = true }: TaskListProps) {
+export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true }: TaskListProps) {
   const coreTasks = tasks.filter(task => !task.parentId);
   const subTasksByParentId = tasks.reduce((acc, task) => {
     if (task.parentId) {
@@ -44,7 +45,8 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onTaskAdd,
               allTasks={allTasks}
               allMembers={allMembers}
               onTaskUpdate={onTaskUpdate}
-              onTaskAdd={onTaskAdd}
+              onSubtaskAdd={onSubtaskAdd}
+              onEdit={onEdit}
               showProjectName={showProjectName}
               isCoreTask={true}
               subtaskCount={subTasks.length}
@@ -63,7 +65,8 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onTaskAdd,
                                 allTasks={allTasks}
                                 allMembers={allMembers}
                                 onTaskUpdate={onTaskUpdate}
-                                onTaskAdd={onTaskAdd}
+                                onSubtaskAdd={onSubtaskAdd}
+                                onEdit={onEdit}
                                 showProjectName={showProjectName}
                                 isCoreTask={false}
                             />

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { Project, Task, Member, TaskStatus } from "@/lib/types";
 import { TaskList } from "./TaskList";
 import { AddTaskDialog } from "./AddTaskDialog";
+import { EditTaskDialog } from "./EditTaskDialog";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -14,6 +15,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface TaskSectionProps {
   initialProject: Project;
@@ -25,7 +27,12 @@ const taskStatuses: TaskStatus[] = ['OPEN', 'WIP', 'CLOSED'];
 export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
   const [project, setProject] = useState(initialProject);
   const [isAddTaskOpen, setAddTaskOpen] = useState(false);
+  const [isEditTaskOpen, setEditTaskOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [parentForNewSubtask, setParentForNewSubtask] = useState<string | undefined>(undefined);
   const [statusFilters, setStatusFilters] = useState<Set<TaskStatus>>(new Set());
+  const { toast } = useToast();
+
 
   const handleStatusFilterChange = (status: TaskStatus) => {
     setStatusFilters((prev) => {
@@ -41,20 +48,15 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
 
   const filteredTasks = project.tasks.filter((task) => {
     if (statusFilters.size === 0) return true;
-    // If a parent task has the filtered status, we keep it and all its children
-    if (statusFilters.has(task.status) && !task.parentId) return true;
     
-    // If a task is a subtask, we check if its parent has the filtered status
     if(task.parentId){
       const parentTask = project.tasks.find(t => t.id === task.parentId);
       if(parentTask && statusFilters.has(parentTask.status)){
         return true;
       }
     }
-    // Also include subtasks if their own status matches, even if parent doesn't
-    if(statusFilters.has(task.status) && task.parentId) return true;
     
-    return false;
+    return statusFilters.has(task.status);
   });
 
   const handleTaskAdd = (newTask: Task) => {
@@ -62,6 +64,7 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
       ...prev,
       tasks: [newTask, ...prev.tasks],
     }));
+    toast({ title: "Task Created", description: `Task "${newTask.name}" has been successfully added.` });
   };
 
   const handleTaskUpdate = (updatedTask: Task) => {
@@ -69,7 +72,23 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
       ...prev,
       tasks: prev.tasks.map(t => t.id === updatedTask.id ? updatedTask : t),
     }));
+    toast({ title: "Task Updated", description: `Task "${updatedTask.name}" has been successfully updated.` });
   };
+
+  const handleEditClick = (task: Task) => {
+    setTaskToEdit(task);
+    setEditTaskOpen(true);
+  };
+
+  const handleSubtaskAddClick = (parentId: string) => {
+    setParentForNewSubtask(parentId);
+    setAddTaskOpen(true);
+  };
+
+  const handleAddTaskClose = () => {
+    setAddTaskOpen(false);
+    setParentForNewSubtask(undefined);
+  }
 
   return (
     <div>
@@ -98,7 +117,7 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
 
             <Button onClick={() => setAddTaskOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Task
+                Add Core Task
             </Button>
         </div>
 
@@ -107,17 +126,31 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
             allTasks={project.tasks}
             allMembers={allMembers}
             onTaskUpdate={handleTaskUpdate}
-            onTaskAdd={handleTaskAdd}
+            onSubtaskAdd={handleSubtaskAddClick}
+            onEdit={handleEditClick}
             showProjectName={false}
         />
 
         <AddTaskDialog
+            key={parentForNewSubtask} // Re-mount when parent changes
             isOpen={isAddTaskOpen}
-            setIsOpen={setAddTaskOpen}
+            setIsOpen={handleAddTaskClose}
             onTaskAdd={handleTaskAdd}
             allMembers={allMembers}
             projectTasks={project.tasks}
+            initialParentId={parentForNewSubtask}
         />
+
+        {taskToEdit && (
+            <EditTaskDialog
+                isOpen={isEditTaskOpen}
+                setIsOpen={setEditTaskOpen}
+                onTaskUpdate={handleTaskUpdate}
+                allMembers={allMembers}
+                projectTasks={project.tasks}
+                taskToEdit={taskToEdit}
+            />
+        )}
     </div>
   );
 }

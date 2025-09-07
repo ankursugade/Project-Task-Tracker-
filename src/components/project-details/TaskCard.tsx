@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus } from "lucide-react";
+import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil } from "lucide-react";
 import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PROJECTS } from "@/lib/data";
@@ -22,14 +22,15 @@ interface TaskCardProps {
   allTasks: Task[];
   allMembers: Member[];
   onTaskUpdate: (task: Task) => void;
-  onTaskAdd: (task: Task) => void;
+  onSubtaskAdd: (parentId: string) => void;
+  onEdit: (task: Task) => void;
   showProjectName?: boolean;
   isCoreTask?: boolean;
   subtaskCount?: number;
   children?: React.ReactNode;
 }
 
-export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onTaskAdd, showProjectName = true, isCoreTask, subtaskCount, children }: TaskCardProps) {
+export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isCoreTask, subtaskCount, children }: TaskCardProps) {
   const assignedMembers = allMembers.filter(m => task.assignedTo.includes(m.id));
   const assigner = allMembers.find(m => m.id === task.assignedBy);
 
@@ -41,22 +42,6 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onTaskAdd, 
   const handleStatusChange = (newStatus: TaskStatus) => {
     onTaskUpdate({ ...task, status: newStatus });
   };
-  
-  const handleAddSubtask = () => {
-    // A simplified sub-task, ideally this would open the full AddTaskDialog with pre-filled parent
-     const newSubtask: Task = {
-      id: `task-${Date.now()}`,
-      name: `New sub-task for ${task.name}`,
-      description: "",
-      status: "OPEN",
-      startDate: new Date(),
-      endDate: new Date(),
-      assignedTo: [],
-      assignedBy: "mem-1", // Placeholder
-      parentId: task.id,
-    };
-    onTaskAdd(newSubtask);
-  }
 
   return (
     <Card className={cn("transition-all duration-300 relative", 
@@ -127,12 +112,20 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onTaskAdd, 
                  <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={handleAddSubtask}><MessageSquarePlus className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => onSubtaskAdd(task.id)}><MessageSquarePlus className="h-4 w-4" /></Button>
                         </TooltipTrigger>
                         <TooltipContent>Add sub-task</TooltipContent>
                     </Tooltip>
                  </TooltipProvider>
                 )}
+                <TooltipProvider>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => onEdit(task)}><Pencil className="h-4 w-4" /></Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit task</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <div className="w-full md:w-auto">
                     <Select onValueChange={handleStatusChange} value={task.status}>
                         <SelectTrigger className="w-full md:w-[180px]">

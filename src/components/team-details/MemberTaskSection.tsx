@@ -16,6 +16,9 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from "next/link";
 import { ChevronsUpDown } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { EditTaskDialog } from "../project-details/EditTaskDialog";
+import { AddTaskDialog } from "../project-details/AddTaskDialog";
 
 interface MemberTaskSectionProps {
   tasksByProject: { project: Project; tasks: Task[] }[];
@@ -24,13 +27,51 @@ interface MemberTaskSectionProps {
 
 const taskStatuses: TaskStatus[] = ['OPEN', 'WIP', 'CLOSED'];
 
-export function MemberTaskSection({ tasksByProject, allMembers }: MemberTaskSectionProps) {
+export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMembers }: MemberTaskSectionProps) {
+  const [tasksByProject, setTasksByProject] = useState(initialTasksByProject);
   const [statusFilters, setStatusFilters] = useState<Set<TaskStatus>>(new Set());
   const [projectFilters, setProjectFilters] = useState<Set<string>>(new Set());
+  const [isEditTaskOpen, setEditTaskOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [isAddTaskOpen, setAddTaskOpen] = useState(false);
+  const [parentForNewSubtask, setParentForNewSubtask] = useState<string | undefined>(undefined);
+  const { toast } = useToast();
   
-  // Note: Task updates are disabled on this page for simplicity. 
-  // A more robust solution would involve a global state manager.
-  const handleTaskUpdate = () => {}; 
+  const handleTaskUpdate = (updatedTask: Task) => {
+    setTasksByProject(prev => prev.map(p => ({
+        ...p,
+        tasks: p.tasks.map(t => t.id === updatedTask.id ? updatedTask : t)
+    })));
+    toast({ title: "Task Updated", description: `Task "${updatedTask.name}" has been successfully updated.` });
+  }; 
+
+  const handleTaskAdd = (newTask: Task) => {
+    setTasksByProject(prev => {
+        const projectIndex = prev.findIndex(p => p.tasks.some(t => t.id === newTask.parentId));
+        if (projectIndex > -1) {
+            const newTasksByProject = [...prev];
+            newTasksByProject[projectIndex].tasks.push(newTask);
+            return newTasksByProject;
+        }
+        return prev;
+    });
+    toast({ title: "Task Created", description: `Task "${newTask.name}" has been successfully added.` });
+  };
+
+  const handleEditClick = (task: Task) => {
+    setTaskToEdit(task);
+    setEditTaskOpen(true);
+  };
+
+  const handleSubtaskAddClick = (parentId: string) => {
+    setParentForNewSubtask(parentId);
+    setAddTaskOpen(true);
+  };
+  
+  const handleAddTaskClose = () => {
+    setAddTaskOpen(false);
+    setParentForNewSubtask(undefined);
+  }
 
   const handleStatusFilterChange = (status: TaskStatus) => {
     setStatusFilters((prev) => {
@@ -59,9 +100,16 @@ export function MemberTaskSection({ tasksByProject, allMembers }: MemberTaskSect
   const allTasks = tasksByProject.flatMap(p => p.tasks);
 
   const filteredProjects = tasksByProject.map(p => {
-    const filteredTasks = p.tasks.filter(task => 
-      statusFilters.size === 0 || statusFilters.has(task.status)
-    );
+    const filteredTasks = p.tasks.filter(task => {
+        if (statusFilters.size === 0) return true;
+        if(task.parentId){
+          const parentTask = p.tasks.find(t => t.id === task.parentId);
+          if(parentTask && statusFilters.has(parentTask.status)){
+            return true;
+          }
+        }
+        return statusFilters.has(task.status);
+    });
     return { ...p, tasks: filteredTasks };
   }).filter(p => {
     const projectMatch = projectFilters.size === 0 || projectFilters.has(p.project.id);
@@ -82,7 +130,7 @@ export function MemberTaskSection({ tasksByProject, allMembers }: MemberTaskSect
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Filter by Project</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {tasksByProject.map(({ project }) => (
+              {initialTasksByProject.map(({ project }) => (
                 <DropdownMenuCheckboxItem
                   key={project.id}
                   checked={projectFilters.has(project.id)}
@@ -134,7 +182,9 @@ export function MemberTaskSection({ tasksByProject, allMembers }: MemberTaskSect
                   allTasks={allTasks}
                   allMembers={allMembers}
                   onTaskUpdate={handleTaskUpdate}
-                  showProjectName={false} // Don't need to show project name here
+                  onSubtaskAdd={handleSubtaskAddClick}
+                  onEdit={handleEditClick}
+                  showProjectName={false}
                 />
               </AccordionContent>
             </AccordionItem>
@@ -146,6 +196,27 @@ export function MemberTaskSection({ tasksByProject, allMembers }: MemberTaskSect
             <p className="text-sm text-muted-foreground">Try clearing the status or project filter.</p>
         </div>
       )}
+
+        <AddTaskDialog
+            key={parentForNewSubtask}
+            isOpen={isAddTaskOpen}
+            setIsOpen={handleAddTaskClose}
+            onTaskAdd={handleTaskAdd}
+            allMembers={allMembers}
+            projectTasks={allTasks}
+            initialParentId={parentForNewSubtask}
+        />
+
+        {taskToEdit && (
+            <EditTaskDialog
+                isOpen={isEditTaskOpen}
+                setIsOpen={setEditTaskOpen}
+                onTaskUpdate={handleTaskUpdate}
+                allMembers={allMembers}
+                projectTasks={allTasks}
+                taskToEdit={taskToEdit}
+            />
+        )}
     </div>
   );
 }

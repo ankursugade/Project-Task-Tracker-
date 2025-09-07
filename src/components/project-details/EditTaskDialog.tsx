@@ -18,23 +18,22 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { Task, Member, TaskStatus } from "@/lib/types";
+import type { Task, Member } from "@/lib/types";
 import { MemberCombobox } from "../shared/MemberCombobox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Switch } from "../ui/switch";
 import { useToast } from "@/hooks/use-toast";
 
-interface AddTaskDialogProps {
+interface EditTaskDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onTaskAdd: (task: Task) => void;
+  onTaskUpdate: (task: Task) => void;
   allMembers: Member[];
   projectTasks: Task[];
-  initialParentId?: string;
+  taskToEdit: Task;
 }
 
-export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projectTasks, initialParentId }: AddTaskDialogProps) {
+export function EditTaskDialog({ isOpen, setIsOpen, onTaskUpdate, allMembers, projectTasks, taskToEdit }: EditTaskDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -42,41 +41,23 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
   const [dependencyId, setDependencyId] = useState<string>("");
   const [assignedBy, setAssignedBy] = useState<string>("");
-  const [isSubtask, setIsSubtask] = useState(!!initialParentId);
-  const [parentId, setParentId] = useState<string | undefined>(initialParentId);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (initialParentId) {
-      setIsSubtask(true);
-      setParentId(initialParentId);
+    if (taskToEdit) {
+      setName(taskToEdit.name);
+      setDescription(taskToEdit.description);
+      setStartDate(taskToEdit.startDate);
+      setEndDate(taskToEdit.endDate);
+      setAssignedTo(taskToEdit.assignedTo);
+      setDependencyId(taskToEdit.dependencyId || "");
+      setAssignedBy(taskToEdit.assignedBy);
     }
-  }, [initialParentId]);
-
-  const coreTasks = projectTasks.filter(t => !t.parentId);
-
-  const resetForm = () => {
-    setName("");
-    setDescription("");
-    setStartDate(undefined);
-    setEndDate(undefined);
-    setAssignedTo([]);
-    setDependencyId("");
-    setAssignedBy("");
-    setIsSubtask(!!initialParentId);
-    setParentId(initialParentId);
-  }
-
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      resetForm();
-    }
-    setIsOpen(open);
-  }
+  }, [taskToEdit]);
 
   const handleSubmit = () => {
-    if (!name || !startDate || !endDate || assignedTo.length === 0 || !assignedBy || (isSubtask && !parentId)) {
-      toast({
+    if (!name || !startDate || !endDate || assignedTo.length === 0 || !assignedBy) {
+       toast({
         title: "Validation Error",
         description: "Please fill out all required fields.",
         variant: "destructive",
@@ -84,58 +65,39 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
       return;
     }
 
-    const newTask: Task = {
-      id: `task-${Date.now()}`,
+    const updatedTask: Task = {
+      ...taskToEdit,
       name,
       description,
-      status: "OPEN" as TaskStatus,
       startDate,
       endDate,
       assignedTo,
       assignedBy,
       dependencyId: dependencyId || undefined,
-      parentId: isSubtask ? parentId : undefined,
     };
 
-    onTaskAdd(newTask);
-    handleOpenChange(false);
+    onTaskUpdate(updatedTask);
+    setIsOpen(false);
   };
 
   const toggleAssignee = (memberId: string) => {
     setAssignedTo(prev => 
       prev.includes(memberId) 
         ? prev.filter(id => id !== memberId) 
-        : [...prev, memberId].slice(0, 4) // Max 4 members
+        : [...prev, memberId].slice(0, 4)
     );
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Add New Task</DialogTitle>
+          <DialogTitle className="font-headline">Edit Task</DialogTitle>
           <DialogDescription>
-            Detail the new task for your project. You can create a core task or a sub-task.
+            Update the details for this task.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="is-subtask">Is this a sub-task?</Label>
-              <Switch id="is-subtask" checked={isSubtask} onCheckedChange={setIsSubtask} disabled={!!initialParentId} />
-            </div>
-            {isSubtask && (
-               <div className="space-y-2">
-                  <Label>Parent Task</Label>
-                  <Select onValueChange={setParentId} value={parentId} disabled={!!initialParentId}>
-                    <SelectTrigger><SelectValue placeholder="Select a parent task" /></SelectTrigger>
-                    <SelectContent>
-                      {coreTasks.map(task => (
-                        <SelectItem key={task.id} value={task.id}>{task.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-               </div>
-            )}
             <div className="space-y-2">
                 <Label htmlFor="name">Task Name</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -204,10 +166,10 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
             </div>
             <div className="space-y-2">
               <Label>Dependency</Label>
-              <Select onValueChange={setDependencyId}>
+              <Select onValueChange={setDependencyId} value={dependencyId}>
                 <SelectTrigger><SelectValue placeholder="Optional: Select dependent task" /></SelectTrigger>
                 <SelectContent>
-                  {projectTasks.map(task => (
+                  {projectTasks.filter(t => t.id !== taskToEdit.id).map(task => (
                     <SelectItem key={task.id} value={task.id}>{task.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -215,7 +177,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
             </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={handleSubmit}>Create Task</Button>
+          <Button type="submit" onClick={handleSubmit}>Update Task</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
