@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -302,13 +303,18 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
     <div>
       <DependencyAlert allTasks={project.tasks} allMembers={allMembers} />
       <div className="flex items-center justify-end gap-2 mb-6">
-        <Button variant="outline" onClick={exportToPDF} disabled={isPdfLoading}>
-            {isPdfLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-                <FileText className="mr-2 h-4 w-4" />
-            )}
-            Export PDF
+        <Button variant="outline" onClick={exportToPDF} disabled={isPdfLoading} className="h-auto py-2">
+            <div className="flex items-center gap-2">
+                {isPdfLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                    <FileText className="h-4 w-4" />
+                )}
+                <div className="flex flex-col items-start text-left">
+                    <span>Export Project Summary</span>
+                    <span className="text-xs text-muted-foreground -mt-0.5">PDF Copy</span>
+                </div>
+            </div>
         </Button>
         <Button variant="outline" onClick={exportToCSV}>
             <FileDown className="mr-2 h-4 w-4" />
