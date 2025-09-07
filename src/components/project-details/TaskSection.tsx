@@ -22,6 +22,7 @@ import { summarizeProject } from "@/ai/flows/summarizeProjectFlow";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { ProjectReport } from "./ProjectReport";
+import { createRoot } from "react-dom/client";
 
 interface TaskSectionProps {
   initialProject: Project;
@@ -233,6 +234,12 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
 
   const exportToPDF = async () => {
     setIsPdfLoading(true);
+    const reportRoot = document.createElement('div');
+    reportRoot.style.position = 'absolute';
+    reportRoot.style.left = '-9999px';
+    document.body.appendChild(reportRoot);
+    const root = createRoot(reportRoot);
+
     try {
         const blockedTasks = project.tasks.filter(task => {
             if (!task.dependencyId) return false;
@@ -256,23 +263,15 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
             blockedTasks: blockedTasks,
         });
 
-        const reportRoot = document.createElement('div');
-        reportRoot.style.position = 'absolute';
-        reportRoot.style.left = '-9999px';
-        document.body.appendChild(reportRoot);
-        
-        const { unmount } = await new Promise<any>((resolve) => {
-          const c = (
+        await new Promise<void>((resolve) => {
+          root.render(
             <ProjectReport 
               project={project} 
               allMembers={allMembers}
               aiSummary={aiSummary} 
-              onRendered={() => resolve({ unmount: () => {} })} // Simplified unmount
+              onRendered={() => resolve()}
             />
           );
-          
-          const ReactDOM = require('react-dom');
-          ReactDOM.render(c, reportRoot);
         });
 
         const reportElement = reportRoot.children[0] as HTMLElement;
@@ -288,13 +287,13 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
         pdf.save(`project_summary_${project.name.replace(/\s+/g, '_')}.pdf`);
         
-        document.body.removeChild(reportRoot);
-
         toast({ title: "PDF Exported", description: "Project summary has been downloaded."});
     } catch(e) {
         console.error("PDF Export Error: ", e);
         toast({ title: "Export Failed", description: "Could not generate PDF report.", variant: "destructive"});
     } finally {
+        root.unmount();
+        document.body.removeChild(reportRoot);
         setIsPdfLoading(false);
     }
   }
