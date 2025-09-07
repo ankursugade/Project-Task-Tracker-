@@ -1,4 +1,4 @@
-import { PROJECTS } from "@/lib/data";
+import { projectStore } from "@/lib/store";
 import { MemberCard } from "./MemberCard";
 import type { Task, Member } from "@/lib/types";
 import { MemberListItem } from "./MemberListItem";
@@ -9,7 +9,7 @@ interface MemberListProps {
 }
 
 export function MemberList({ members, view }: MemberListProps) {
-  const allTasks: Task[] = PROJECTS.flatMap(p => p.tasks);
+  const allTasks: Task[] = projectStore.getAllTasks();
 
   const getMemberTaskStats = (memberId: string) => {
     const memberTasks = allTasks.filter(task => task.assignedTo.includes(memberId));
@@ -19,6 +19,7 @@ export function MemberList({ members, view }: MemberListProps) {
     today.setHours(0, 0, 0, 0);
 
     const dueTodayTasks = memberTasks.filter(t => {
+        if (!t.endDate) return false;
         const endDate = new Date(t.endDate);
         endDate.setHours(0, 0, 0, 0);
         return (t.status === 'OPEN' || t.status === 'WIP') && endDate.getTime() === today.getTime();

@@ -15,7 +15,7 @@ import type { Member } from "@/lib/types";
 interface AddMemberDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onMemberAdd: (member: Omit<Member, 'id' | 'avatarUrl'>) => void;
+  onMemberAdd: (member: Member) => void;
 }
 
 export function AddMemberDialog({ isOpen, setIsOpen, onMemberAdd }: AddMemberDialogProps) {
@@ -26,8 +26,14 @@ export function AddMemberDialog({ isOpen, setIsOpen, onMemberAdd }: AddMemberDia
       // Basic validation
       return;
     }
+    
+    const newMember: Member = {
+      id: `mem-${Date.now()}`,
+      name,
+      avatarUrl: `https://picsum.photos/seed/${name.split(' ')[0]}/40/40`,
+    }
 
-    onMemberAdd({ name });
+    onMemberAdd(newMember);
     setIsOpen(false);
     // Reset form
     setName("");

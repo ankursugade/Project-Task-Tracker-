@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Task, Member, TaskStatus, Project } from "@/lib/types";
@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import { AddTaskDialog } from "../project-details/AddTaskDialog";
 import { logStore } from "@/lib/log-store";
+import { projectStore, memberStore } from "@/lib/store";
 
 interface MemberTaskSectionProps {
   tasksByProject: { project: Project; tasks: Task[] }[];
@@ -37,132 +38,147 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
   const [isAddTaskOpen, setAddTaskOpen] = useState(false);
   const [parentForNewSubtask, setParentForNewSubtask] = useState<string | undefined>(undefined);
   const { toast } = useToast();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    // This effect ensures we are using the latest data from the store on the client side
+    const allProjects = projectStore.getProjects();
+    const memberId = allMembers[0]?.id; // Assuming we are on a member's page
+    if (memberId) {
+        const updatedTasksByProject = allProjects.map(project => {
+            const tasks = project.tasks.filter(task => task.assignedTo.includes(memberId));
+            return { project, tasks };
+        }).filter(group => group.tasks.length > 0);
+        setTasksByProject(updatedTasksByProject);
+    }
+    setIsMounted(true);
+  }, [allMembers]);
+
+  if (!isMounted) {
+    return null; // Or a loading skeleton
+  }
   
   const allTasks = tasksByProject.flatMap(p => p.tasks);
 
   const handleTaskUpdate = (updatedTask: Task, changedById: string) => {
-    const projectIndex = tasksByProject.findIndex(p => p.tasks.some(t => t.id === updatedTask.id));
-    if (projectIndex === -1) return;
+      const projectForTask = projectStore.getProjects().find(p => p.tasks.some(t => t.id === updatedTask.id));
+      if (!projectForTask) return;
 
-    let project = tasksByProject[projectIndex];
-    let newTasks = [...project.tasks];
-    const originalTask = newTasks.find(t => t.id === updatedTask.id);
+      let project = { ...projectForTask };
+      let newTasks = [...project.tasks];
+      const originalTask = newTasks.find(t => t.id === updatedTask.id);
 
-    if (!originalTask) return;
+      if (!originalTask) return;
 
-    let finalUpdatedTask = { ...updatedTask };
-    const statusChanged = originalTask.status !== finalUpdatedTask.status;
+      let finalUpdatedTask = { ...updatedTask };
+      const statusChanged = originalTask.status !== finalUpdatedTask.status;
 
-    if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
-        finalUpdatedTask.revision = (originalTask.revision || 0) + 1;
-    }
+      if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
+          finalUpdatedTask.revision = (originalTask.revision || 0) + 1;
+      }
 
-    // Rule 1: Prevent closing a blocked task
-    if (finalUpdatedTask.status === 'CLOSED' && finalUpdatedTask.dependencyId) {
-        const dependency = allTasks.find(t => t.id === finalUpdatedTask.dependencyId);
-        if (dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP')) {
-            toast({
-                title: "Action Blocked",
-                description: `Cannot close "${finalUpdatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
-                variant: "destructive",
-            });
-            return;
-        }
-    }
-    
-    newTasks = newTasks.map(t => t.id === finalUpdatedTask.id ? finalUpdatedTask : t);
+      if (finalUpdatedTask.status === 'CLOSED' && finalUpdatedTask.dependencyId) {
+          const dependency = allTasks.find(t => t.id === finalUpdatedTask.dependencyId);
+          if (dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP')) {
+              toast({
+                  title: "Action Blocked",
+                  description: `Cannot close "${finalUpdatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
+                  variant: "destructive",
+              });
+              return;
+          }
+      }
+      
+      newTasks = newTasks.map(t => t.id === finalUpdatedTask.id ? finalUpdatedTask : t);
 
-    // Rule 2: If a core task is being closed, close all its sub-tasks
-    if (!finalUpdatedTask.parentId && finalUpdatedTask.status === 'CLOSED' && originalTask.status !== 'CLOSED') {
-        newTasks = newTasks.map(t => {
-            if (t.parentId === finalUpdatedTask.id && t.status !== 'CLOSED') {
-                 logStore.add({
-                    taskId: t.id, taskName: t.name, projectId: project.project.id, projectName: project.project.name,
-                    previousStatus: t.status, newStatus: 'CLOSED', changedBy: changedById,
-                });
-                return { ...t, status: 'CLOSED' };
-            }
-            return t;
-        });
-    }
+      if (!finalUpdatedTask.parentId && finalUpdatedTask.status === 'CLOSED' && originalTask.status !== 'CLOSED') {
+          newTasks = newTasks.map(t => {
+              if (t.parentId === finalUpdatedTask.id && t.status !== 'CLOSED') {
+                   logStore.add({
+                      taskId: t.id, taskName: t.name, projectId: project.id, projectName: project.name,
+                      previousStatus: t.status, newStatus: 'CLOSED', changedBy: changedById,
+                  });
+                  return { ...t, status: 'CLOSED' as TaskStatus };
+              }
+              return t;
+          });
+      }
 
-    // Rule 3: If a dependency is reopened, reopen dependent tasks
-    if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
-        const dependentTasks = allTasks.filter(t => t.dependencyId === finalUpdatedTask.id);
-        dependentTasks.forEach(depTask => {
-             const depTaskProjectIndex = tasksByProject.findIndex(p => p.tasks.some(t => t.id === depTask.id));
-             if (depTaskProjectIndex === -1) return;
+      if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
+          const dependentTasks = allTasks.filter(t => t.dependencyId === finalUpdatedTask.id);
+          dependentTasks.forEach(depTask => {
+               if (depTask.status === 'CLOSED') {
+                  const depTaskProject = projectStore.getProjects().find(p => p.tasks.some(t => t.id === depTask.id));
+                   if (depTaskProject) {
+                      const updatedDepProjectTasks = depTaskProject.tasks.map(t => {
+                          if (t.id === depTask.id) {
+                            logStore.add({
+                                taskId: t.id, taskName: t.name, projectId: depTaskProject.id, projectName: depTaskProject.name,
+                                previousStatus: 'CLOSED', newStatus: 'OPEN', changedBy: changedById,
+                            });
+                            const newRevision = (t.revision || 0) + 1;
+                            return { ...t, status: 'OPEN' as TaskStatus, revision: newRevision };
+                          }
+                          return t;
+                      });
+                      projectStore.updateProject({ ...depTaskProject, tasks: updatedDepProjectTasks });
+                   }
+               }
+          });
+      }
 
-             setTasksByProject(prev => {
-                const newProjects = [...prev];
-                const targetProject = newProjects[depTaskProjectIndex];
-                targetProject.tasks = targetProject.tasks.map(t => {
-                    if (t.id === depTask.id && t.status === 'CLOSED') {
-                        logStore.add({
-                            taskId: t.id, taskName: t.name, projectId: targetProject.project.id, projectName: targetProject.project.name,
-                            previousStatus: 'CLOSED', newStatus: 'OPEN', changedBy: changedById,
-                        });
-                        const newRevision = (t.revision || 0) + 1;
-                        return { ...t, status: 'OPEN', revision: newRevision };
-                    }
-                    return t;
-                });
-                return newProjects;
-             });
-        });
-    }
+      if (statusChanged) {
+          logStore.add({
+              taskId: originalTask.id, taskName: originalTask.name, projectId: project.id, projectName: project.name,
+              previousStatus: originalTask.status, newStatus: finalUpdatedTask.status, changedBy: changedById,
+          });
+      }
+      
+      projectStore.updateProject({ ...project, tasks: newTasks });
+      // Force a re-render by fetching the latest state from the store
+      const memberId = allMembers[0]?.id; // Re-fetch based on current context
+      const updatedData = projectStore.getProjects().map(p => ({
+          project: p,
+          tasks: p.tasks.filter(t => t.assignedTo.includes(memberId))
+      })).filter(g => g.tasks.length > 0);
+      setTasksByProject(updatedData);
 
-
-    if (statusChanged) {
-        logStore.add({
-            taskId: originalTask.id, taskName: originalTask.name, projectId: project.project.id, projectName: project.project.name,
-            previousStatus: originalTask.status, newStatus: finalUpdatedTask.status, changedBy: changedById,
-        });
-    }
-    
-    setTasksByProject(prev => {
-        const newProjects = [...prev];
-        newProjects[projectIndex].tasks = newTasks;
-        return newProjects;
-    });
-
-    toast({ title: "Task Updated", description: `Task "${finalUpdatedTask.name}" has been successfully updated.` });
+      toast({ title: "Task Updated", description: `Task "${finalUpdatedTask.name}" has been successfully updated.` });
   }; 
 
 
   const handleTaskAdd = (newTask: Task) => {
     let finalTask = { ...newTask, revision: 0 };
-    const allTasks = tasksByProject.flatMap(p => p.tasks);
-
-    // Find the project this task belongs to
-    const projectIndex = tasksByProject.findIndex(p => p.project.id === taskToEdit?.id || p.tasks.some(t => t.id === newTask.parentId));
     
-    if (projectIndex === -1) {
+    const projectForTask = projectStore.getProjects().find(p => p.tasks.some(t => t.id === newTask.parentId));
+    
+    if (!projectForTask) {
         toast({title: "Error", description: "Could not find project for this task.", variant: "destructive"});
         return;
     }
 
-    const projectTasks = tasksByProject[projectIndex].tasks;
+    const projectTasks = projectForTask.tasks;
     const coreTasks = projectTasks.filter(t => !t.parentId);
 
     if (newTask.parentId) {
-      // It's a sub-task
       const parentTask = projectTasks.find(t => t.id === newTask.parentId);
       const parentNumberString = parentTask?.name.split('.')[0];
       const parentNumber = parentNumberString ? parseInt(parentNumberString, 10) : coreTasks.length;
       const subTaskCount = projectTasks.filter(t => t.parentId === newTask.parentId).length;
       finalTask.name = `${parentNumber}.${subTaskCount + 1}. ${newTask.name}`;
     } else {
-      // It's a core task - this case should ideally not happen from member view, but as a fallback
       finalTask.name = `${coreTasks.length + 1}. ${newTask.name}`;
     }
 
-
-    setTasksByProject(prev => {
-        const newTasksByProject = [...prev];
-        newTasksByProject[projectIndex].tasks.push(finalTask);
-        return newTasksByProject;
-    });
+    const updatedTasks = [...projectForTask.tasks, finalTask];
+    projectStore.updateProject({ ...projectForTask, tasks: updatedTasks });
+    
+    const memberId = allMembers[0]?.id;
+    const updatedData = projectStore.getProjects().map(p => ({
+        project: p,
+        tasks: p.tasks.filter(t => t.assignedTo.includes(memberId))
+    })).filter(g => g.tasks.length > 0);
+    setTasksByProject(updatedData);
 
     toast({ title: "Task Created", description: `Task "${finalTask.name}" has been successfully added.` });
   };
@@ -286,7 +302,7 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
               <AccordionContent className="p-4 pt-0">
                 <TaskList
                   tasks={tasks}
-                  allTasks={allTasks}
+                  allTasks={projectStore.getAllTasks()}
                   allMembers={allMembers}
                   onTaskUpdate={handleTaskUpdate}
                   onSubtaskAdd={handleSubtaskAddClick}

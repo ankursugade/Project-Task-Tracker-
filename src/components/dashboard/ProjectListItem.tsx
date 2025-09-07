@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MEMBERS } from "@/lib/data";
+import { memberStore } from "@/lib/store";
 import type { Project } from "@/lib/types";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -18,9 +18,10 @@ export function ProjectListItem({ project }: ProjectListItemProps) {
   const { name, stage, tasks, projectLead, designCaptain } = project;
   const completedTasks = tasks.filter((task) => task.status === "CLOSED").length;
   const progress = tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0;
-
-  const lead = MEMBERS.find((m) => m.id === projectLead);
-  const captain = MEMBERS.find((m) => m.id === designCaptain);
+  
+  const allMembers = memberStore.getMembers();
+  const lead = allMembers.find((m) => m.id === projectLead);
+  const captain = allMembers.find((m) => m.id === designCaptain);
 
   return (
     <Link href={`/projects/${project.id}`} className="block">

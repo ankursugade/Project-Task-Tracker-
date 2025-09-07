@@ -1,6 +1,5 @@
 import { Header } from "@/components/Header";
 import { ProjectSection } from "@/components/dashboard/ProjectSection";
-import { Separator } from "@/components/ui/separator";
 
 export default function ProjectsPage() {
   return (

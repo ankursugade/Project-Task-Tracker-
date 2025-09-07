@@ -1,24 +1,25 @@
-import { notFound } from "next/navigation";
-import { MEMBERS, PROJECTS } from "@/lib/data";
+"use client";
+
+import { notFound, useParams } from "next/navigation";
+import { memberStore, projectStore } from "@/lib/store";
 import { Header } from "@/components/Header";
 import { MemberDetailHeader } from "@/components/team-details/MemberDetailHeader";
 import { MemberTaskSection } from "@/components/team-details/MemberTaskSection";
 import type { Task, Project } from "@/lib/types";
 
-export async function generateStaticParams() {
-  return MEMBERS.map((member) => ({
-    id: member.id,
-  }));
-}
-
-export default function MemberPage({ params }: { params: { id: string } }) {
-  const member = MEMBERS.find((p) => p.id === params.id);
+export default function MemberPage() {
+  const params = useParams();
+  const memberId = params.id as string;
+  const member = memberStore.getMemberById(memberId);
   
   if (!member) {
     notFound();
   }
 
-  const memberTasksByProject: { project: Project; tasks: Task[] }[] = PROJECTS.map(project => {
+  const allProjects = projectStore.getProjects();
+  const allMembers = memberStore.getMembers();
+
+  const memberTasksByProject: { project: Project; tasks: Task[] }[] = allProjects.map(project => {
     const tasks = project.tasks.filter(task => task.assignedTo.includes(member.id));
     return { project, tasks };
   }).filter(group => group.tasks.length > 0);
@@ -29,7 +30,7 @@ export default function MemberPage({ params }: { params: { id: string } }) {
       <main className="flex-1 p-4 md:p-8 lg:p-10">
         <div className="mx-auto max-w-6xl">
           <MemberDetailHeader member={member} />
-          <MemberTaskSection tasksByProject={memberTasksByProject} allMembers={MEMBERS} />
+          <MemberTaskSection tasksByProject={memberTasksByProject} allMembers={allMembers} />
         </div>
       </main>
     </div>

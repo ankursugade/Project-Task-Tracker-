@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { notFound, useParams } from "next/navigation";
-import { PROJECTS, MEMBERS } from "@/lib/data";
+import { projectStore, memberStore } from "@/lib/store";
 import { Header } from "@/components/Header";
 import { ProjectDetailHeader } from "@/components/project-details/ProjectDetailHeader";
 import { TaskSection } from "@/components/project-details/TaskSection";
@@ -19,7 +19,8 @@ import { createRoot } from "react-dom/client";
 export default function ProjectPage() {
   const params = useParams();
   const projectId = typeof params.id === 'string' ? params.id : '';
-  const initialProject = PROJECTS.find((p) => p.id === projectId);
+  // Use the store to get the project
+  const initialProject = projectStore.getProjectById(projectId);
   
   const [project, setProject] = useState<Project | undefined>(initialProject);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -29,9 +30,13 @@ export default function ProjectPage() {
     notFound();
   }
 
+  const allMembers = memberStore.getMembers();
+
   const handleStageChange = (newStage: ProjectStage) => {
     if (!project) return;
-    setProject({ ...project, stage: newStage });
+    const updatedProject = { ...project, stage: newStage };
+    setProject(updatedProject);
+    projectStore.updateProject(updatedProject);
     toast({ title: "Project Stage Updated", description: `Project moved to "${newStage}" stage.`});
   }
 
@@ -51,7 +56,7 @@ export default function ProjectPage() {
             return dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP');
         }).map(task => {
             const dependency = project.tasks.find(d => d.id === task.dependencyId)!;
-            const assignedToDependency = MEMBERS
+            const assignedToDependency = allMembers
                 .filter(m => dependency.assignedTo.includes(m.id))
                 .map(m => m.name)
                 .join(", ");
@@ -71,7 +76,7 @@ export default function ProjectPage() {
           root.render(
             <ProjectReport 
               project={project} 
-              allMembers={MEMBERS}
+              allMembers={allMembers}
               aiSummary={aiSummary} 
               onRendered={() => resolve()}
             />
@@ -112,6 +117,7 @@ export default function ProjectPage() {
           <div className="mx-auto max-w-6xl">
             <ProjectDetailHeader 
                 project={project} 
+                allMembers={allMembers}
                 onExportPDF={exportToPDF}
                 isPdfLoading={isPdfLoading}
                 onStageChange={handleStageChange}
@@ -119,7 +125,7 @@ export default function ProjectPage() {
             <TaskSection 
                 project={project}
                 setProject={setProject} 
-                allMembers={MEMBERS} 
+                allMembers={allMembers} 
             />
           </div>
         </main>

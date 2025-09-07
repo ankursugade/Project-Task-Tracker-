@@ -4,23 +4,19 @@ import { useState } from "react";
 import { PlusCircle, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MemberList } from "./MemberList";
-import { MEMBERS } from "@/lib/data";
+import { memberStore } from "@/lib/store";
 import type { Member } from "@/lib/types";
 import { AddMemberDialog } from "./AddMemberDialog";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export function MemberSection() {
-  const [members, setMembers] = useState<Member[]>(MEMBERS);
+  const [members, setMembers] = useState<Member[]>(memberStore.getMembers());
   const [isAddMemberOpen, setAddMemberOpen] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const handleMemberAdd = (newMember: Omit<Member, 'id' | 'avatarUrl'>) => {
-    const newMemberWithId: Member = {
-      ...newMember,
-      id: `mem-${Date.now()}`,
-      avatarUrl: `https://picsum.photos/seed/${newMember.name.split(' ')[0]}/40/40`,
-    };
-    setMembers((prev) => [newMemberWithId, ...prev]);
+  const handleMemberAdd = (newMember: Member) => {
+    memberStore.addMember(newMember);
+    setMembers(memberStore.getMembers());
   };
 
   return (

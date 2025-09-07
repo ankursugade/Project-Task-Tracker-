@@ -17,11 +17,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2, GitBranch, ChevronsUpDown, GitPullRequest, UserPlus } from "lucide-react";
 import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { PROJECTS } from "@/lib/data";
+import { projectStore } from "@/lib/store";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Label } from '../ui/label';
-import { MemberCombobox } from '../shared/MemberCombobox';
 import { Badge } from '../ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '../ui/command';
@@ -49,7 +47,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
   const assignedMembers = overrideAssignedMembers ?? allMembers.filter(m => task.assignedTo.includes(m.id));
   const assigner = allMembers.find(m => m.id === task.assignedBy);
 
-  const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === task.id)) : undefined;
+  const project = showProjectName ? projectStore.getProjects().find(p => p.tasks.some(t => t.id === task.id)) : undefined;
 
   const dependencyTask = task.dependencyId ? allTasks.find(t => t.id === task.dependencyId) : undefined;
   const isBlocked = dependencyTask && (dependencyTask.status === "OPEN" || dependencyTask.status === "WIP");
@@ -135,7 +133,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4"/>
-                  <span>{task.startDate.toLocaleDateString()} - {task.endDate.toLocaleDateString()}</span>
+                  <span>{new Date(task.startDate).toLocaleDateString()} - {new Date(task.endDate).toLocaleDateString()}</span>
               </div>
               {assigner && 
                 <div className="flex items-center gap-2">

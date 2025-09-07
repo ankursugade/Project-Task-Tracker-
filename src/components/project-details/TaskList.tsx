@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Briefcase, ChevronsUpDown } from "lucide-react";
-import { PROJECTS } from "@/lib/data";
+import { projectStore } from "@/lib/store";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 
 
@@ -67,7 +67,7 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
             )
         }
 
-        const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === coreTask.id)) : undefined;
+        const project = showProjectName ? projectStore.getProjects().find(p => p.tasks.some(t => t.id === coreTask.id)) : undefined;
 
         const uniqueSubtaskMembers = hasSubtasks 
           ? allMembers.filter(member => 

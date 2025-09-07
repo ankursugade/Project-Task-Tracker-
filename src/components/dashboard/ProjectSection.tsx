@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusCircle, Filter, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PROJECTS, MEMBERS } from "@/lib/data";
+import { projectStore, memberStore } from "@/lib/store";
 import type { Project, ProjectStage } from "@/lib/types";
 import { ProjectList } from "./ProjectList";
 import {
@@ -23,13 +23,28 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 const projectStages: ProjectStage[] = ["Pitch", "Design", "Construction", "Handover"];
 
 export function ProjectSection() {
-  const [projects, setProjects] = useState<Project[]>(PROJECTS);
+  // Initialize state from the store
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Filters and UI state
   const [stageFilters, setStageFilters] = useState<Set<ProjectStage>>(new Set());
   const [leadFilter, setLeadFilter] = useState<string>("");
   const [captainFilter, setCaptainFilter] = useState<string>("");
   const [isAddProjectOpen, setAddProjectOpen] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
 
+  // Effect to sync with the client-side store after mounting
+  useEffect(() => {
+    setProjects(projectStore.getProjects());
+    setIsMounted(true);
+  }, []);
+  
+  if (!isMounted) {
+    return null; // or a loading skeleton
+  }
+
+  const allMembers = memberStore.getMembers();
 
   const handleStageFilterChange = (stage: ProjectStage) => {
     setStageFilters((prev) => {
@@ -58,6 +73,11 @@ export function ProjectSection() {
     setStageFilters(new Set());
     setLeadFilter("");
     setCaptainFilter("");
+  };
+
+  const handleProjectAdd = (newProject: Project) => {
+    projectStore.addProject(newProject);
+    setProjects(projectStore.getProjects());
   };
 
   return (
@@ -100,7 +120,7 @@ export function ProjectSection() {
               <div className="p-2 space-y-2">
                 <p className="text-sm font-medium">Project Lead</p>
                 <MemberCombobox
-                  members={MEMBERS}
+                  members={allMembers}
                   selectedMember={leadFilter}
                   setSelectedMember={setLeadFilter}
                   placeholder="Select lead..."
@@ -109,7 +129,7 @@ export function ProjectSection() {
               <div className="p-2 space-y-2">
                 <p className="text-sm font-medium">Design Captain</p>
                 <MemberCombobox
-                  members={MEMBERS}
+                  members={allMembers}
                   selectedMember={captainFilter}
                   setSelectedMember={setCaptainFilter}
                   placeholder="Select captain..."
@@ -135,7 +155,7 @@ export function ProjectSection() {
       <AddProjectDialog
         isOpen={isAddProjectOpen}
         setIsOpen={setAddProjectOpen}
-        onProjectAdd={(newProject) => setProjects((p) => [newProject, ...p])}
+        onProjectAdd={handleProjectAdd}
         projects={projects}
       />
     </section>

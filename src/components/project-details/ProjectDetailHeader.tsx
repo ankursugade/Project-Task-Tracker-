@@ -2,8 +2,7 @@
 import Link from "next/link";
 import { ChevronLeft, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Project, ProjectStage } from "@/lib/types";
-import { MEMBERS } from "@/lib/data";
+import type { Project, ProjectStage, Member } from "@/lib/types";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
@@ -14,14 +13,15 @@ const projectStages: ProjectStage[] = ["Pitch", "Design", "Construction", "Hando
 
 interface ProjectDetailHeaderProps {
   project: Project;
+  allMembers: Member[];
   onExportPDF: () => void;
   isPdfLoading: boolean;
   onStageChange: (newStage: ProjectStage) => void;
 }
 
-export function ProjectDetailHeader({ project, onExportPDF, isPdfLoading, onStageChange }: ProjectDetailHeaderProps) {
-  const lead = MEMBERS.find(m => m.id === project.projectLead);
-  const captain = MEMBERS.find(m => m.id === project.designCaptain);
+export function ProjectDetailHeader({ project, allMembers, onExportPDF, isPdfLoading, onStageChange }: ProjectDetailHeaderProps) {
+  const lead = allMembers.find(m => m.id === project.projectLead);
+  const captain = allMembers.find(m => m.id === project.designCaptain);
 
   return (
     <div className="mb-8">

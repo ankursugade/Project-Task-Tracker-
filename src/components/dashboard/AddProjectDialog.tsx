@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MEMBERS } from "@/lib/data";
+import { memberStore } from "@/lib/store";
 import type { Project, ProjectStage, Member } from "@/lib/types";
 import { MemberCombobox } from "../shared/MemberCombobox";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,8 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd, projects }: 
   const [copyFrom, setCopyFrom] = useState<string>("");
   const { toast } = useToast();
 
+  const allMembers = memberStore.getMembers();
+
   const handleSubmit = () => {
     if (!name || !projectLead || !designCaptain) {
       toast({
@@ -43,6 +45,9 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd, projects }: 
       });
       return;
     }
+    
+    // Use the passed `projects` prop which is the live state
+    const projectToCopy = projects.find(p => p.id === copyFrom);
 
     const newProject: Project = {
       id: `proj-${Date.now()}`,
@@ -50,7 +55,7 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd, projects }: 
       stage,
       projectLead,
       designCaptain,
-      tasks: copyFrom ? projects.find(p => p.id === copyFrom)?.tasks.map(t => ({...t, id: `task-${Date.now()}-${t.id}`, assignedTo: []})) || [] : [],
+      tasks: copyFrom ? projectToCopy?.tasks.map(t => ({...t, id: `task-${Date.now()}-${t.id}`, assignedTo: []})) || [] : [],
     };
     onProjectAdd(newProject);
     setIsOpen(false);
@@ -92,13 +97,13 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd, projects }: 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="lead" className="text-right">Project Lead</Label>
             <div className="col-span-3">
-              <MemberCombobox members={MEMBERS} selectedMember={projectLead} setSelectedMember={setProjectLead} />
+              <MemberCombobox members={allMembers} selectedMember={projectLead} setSelectedMember={setProjectLead} />
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="captain" className="text-right">Design Captain</Label>
             <div className="col-span-3">
-              <MemberCombobox members={MEMBERS} selectedMember={designCaptain} setSelectedMember={setDesignCaptain} />
+              <MemberCombobox members={allMembers} selectedMember={designCaptain} setSelectedMember={setDesignCaptain} />
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">

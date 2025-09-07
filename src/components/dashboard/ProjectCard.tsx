@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MEMBERS } from "@/lib/data";
+import { memberStore } from "@/lib/store";
 import type { Project } from "@/lib/types";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -27,8 +27,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const progress = tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0;
   const unassignedTasks = tasks.filter(task => task.assignedTo.length === 0).length;
 
-  const lead = MEMBERS.find((m) => m.id === projectLead);
-  const captain = MEMBERS.find((m) => m.id === designCaptain);
+  const allMembers = memberStore.getMembers();
+  const lead = allMembers.find((m) => m.id === projectLead);
+  const captain = allMembers.find((m) => m.id === designCaptain);
 
   return (
     <Card className="flex flex-col h-full transition-shadow duration-300 hover:shadow-lg">
