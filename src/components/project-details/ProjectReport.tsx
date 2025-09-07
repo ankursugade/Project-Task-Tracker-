@@ -46,7 +46,7 @@ export function ProjectReport({ project, allMembers, aiSummary, onRendered }: Pr
         <div className="flex items-center gap-3">
           <LayoutGrid className="h-10 w-10 text-primary" />
           <div>
-            <h1 className="text-4xl font-bold font-headline text-primary">ProjectZen</h1>
+            <h1 className="text-4xl font-bold font-headline text-primary">Projects & Tasks Tracker</h1>
             <p className="text-muted-foreground">Project Status Report</p>
           </div>
         </div>
@@ -146,7 +146,7 @@ export function ProjectReport({ project, allMembers, aiSummary, onRendered }: Pr
 
       {/* Footer */}
       <footer className="mt-8 pt-4 border-t-2 border-primary/20 text-center">
-        <p className="text-xs text-muted-foreground">This is an auto-generated document from ProjectZen.</p>
+        <p className="text-xs text-muted-foreground">This is an auto-generated document from Projects & Tasks Tracker.</p>
       </footer>
     </div>
   );

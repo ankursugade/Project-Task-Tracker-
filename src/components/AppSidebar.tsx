@@ -36,7 +36,7 @@ export function AppSidebar() {
         className="group flex items-center justify-center rounded-lg text-primary mb-4"
       >
         <LayoutGrid className="h-7 w-7 transition-all group-hover:scale-110" />
-        <span className="sr-only">ProjectZen</span>
+        <span className="sr-only">Projects & Tasks Tracker</span>
       </Link>
       <TooltipProvider>
         <nav className="flex flex-col items-center gap-4">

@@ -11,7 +11,7 @@ export function Header() {
            <Link href="/dashboard/projects" className="flex items-center gap-2">
             <LayoutGrid className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold font-headline text-primary">
-                ProjectZen
+                Projects & Tasks Tracker
             </h1>
            </Link>
         </div>
