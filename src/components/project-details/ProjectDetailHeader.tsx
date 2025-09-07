@@ -2,20 +2,24 @@
 import Link from "next/link";
 import { ChevronLeft, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Project } from "@/lib/types";
+import type { Project, ProjectStage } from "@/lib/types";
 import { MEMBERS } from "@/lib/data";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import { Separator } from "../ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+
+const projectStages: ProjectStage[] = ["Pitch", "Design", "Construction", "Handover"];
 
 interface ProjectDetailHeaderProps {
   project: Project;
   onExportPDF: () => void;
   isPdfLoading: boolean;
+  onStageChange: (newStage: ProjectStage) => void;
 }
 
-export function ProjectDetailHeader({ project, onExportPDF, isPdfLoading }: ProjectDetailHeaderProps) {
+export function ProjectDetailHeader({ project, onExportPDF, isPdfLoading, onStageChange }: ProjectDetailHeaderProps) {
   const lead = MEMBERS.find(m => m.id === project.projectLead);
   const captain = MEMBERS.find(m => m.id === project.designCaptain);
 
@@ -31,7 +35,18 @@ export function ProjectDetailHeader({ project, onExportPDF, isPdfLoading }: Proj
         <div>
           <div className="flex items-center gap-4">
             <h1 className="text-3xl font-bold font-headline">{project.name}</h1>
-            <StatusBadge status={project.stage} />
+             <Select onValueChange={onStageChange} value={project.stage}>
+                <SelectTrigger className="w-auto border-none shadow-none bg-transparent p-0 h-auto focus:ring-0 focus:ring-offset-0">
+                  <SelectValue asChild>
+                    <StatusBadge status={project.stage} />
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    {projectStages.map(stage => (
+                        <SelectItem key={stage} value={stage}>{stage}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
           </div>
           <p className="text-muted-foreground mt-1">Manage and track all tasks for this project.</p>
         </div>

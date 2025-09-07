@@ -8,7 +8,7 @@ import { Header } from "@/components/Header";
 import { ProjectDetailHeader } from "@/components/project-details/ProjectDetailHeader";
 import { TaskSection } from "@/components/project-details/TaskSection";
 import { AppSidebar } from "@/components/AppSidebar";
-import type { Project } from "@/lib/types";
+import type { Project, ProjectStage } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { summarizeProject } from "@/ai/flows/summarizeProjectFlow";
 import jsPDF from "jspdf";
@@ -27,6 +27,12 @@ export default function ProjectPage() {
   
   if (!project) {
     notFound();
+  }
+
+  const handleStageChange = (newStage: ProjectStage) => {
+    if (!project) return;
+    setProject({ ...project, stage: newStage });
+    toast({ title: "Project Stage Updated", description: `Project moved to "${newStage}" stage.`});
   }
 
   const exportToPDF = async () => {
@@ -108,6 +114,7 @@ export default function ProjectPage() {
                 project={project} 
                 onExportPDF={exportToPDF}
                 isPdfLoading={isPdfLoading}
+                onStageChange={handleStageChange}
             />
             <TaskSection 
                 project={project}
