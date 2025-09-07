@@ -51,13 +51,7 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
                 showProjectName={showProjectName}
                 isCoreTask={true}
                 subtaskCount={subTasks.length}
-              >
-                {subTasks.length > 0 && (
-                  <AccordionTrigger className="w-8 h-8 p-1 absolute right-2 top-1/2 -translate-y-1/2 rounded-md hover:bg-accent flex items-center justify-center [&[data-state=open]>svg]:rotate-180">
-                      <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
-                  </AccordionTrigger>
-                )}
-              </TaskCard>
+              />
               {subTasks.length > 0 && (
                 <AccordionContent className="pt-0">
                   <div className="pl-8 mt-2 space-y-2 border-l-2 border-dashed ml-7">
