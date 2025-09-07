@@ -136,19 +136,15 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground"/>
-                  <div className="flex -space-x-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                   {assignedMembers.map(member => (
-                      <TooltipProvider key={member.id}>
-                          <Tooltip>
-                              <TooltipTrigger>
-                                  <Avatar className="h-8 w-8 border-2 border-card">
-                                      <AvatarImage src={member.avatarUrl} alt={member.name} data-ai-hint="person face" />
-                                      <AvatarFallback>{member.name[0]}</AvatarFallback>
-                                  </Avatar>
-                              </TooltipTrigger>
-                              <TooltipContent>{member.name}</TooltipContent>
-                          </Tooltip>
-                      </TooltipProvider>
+                      <div key={member.id} className="flex items-center gap-1.5">
+                          <Avatar className="h-6 w-6 border-2 border-card">
+                              <AvatarImage src={member.avatarUrl} alt={member.name} data-ai-hint="person face" />
+                              <AvatarFallback>{member.name[0]}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs">{member.name}</span>
+                      </div>
                   ))}
                   </div>
               </div>
