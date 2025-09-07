@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PlusCircle, Filter, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Project, Task, Member, TaskStatus } from "@/lib/types";
@@ -36,6 +36,22 @@ export function TaskSection({ project, setProject, allMembers }: TaskSectionProp
   const [parentForNewSubtask, setParentForNewSubtask] = useState<string | undefined>(undefined);
   const [statusFilters, setStatusFilters] = useState<Set<TaskStatus>>(new Set());
   const { toast } = useToast();
+  const prevTasksRef = useRef(project.tasks);
+
+  useEffect(() => {
+    if (prevTasksRef.current !== project.tasks) {
+      // Logic to find out what changed could be more sophisticated
+      // For now, we assume an update toast is fine if lists differ.
+      const updatedTask = project.tasks.find(t => 
+        prevTasksRef.current.some(pt => pt.id === t.id && pt !== t)
+      );
+
+      if (updatedTask) {
+        toast({ title: "Task Updated", description: `Task "${updatedTask.name}" has been successfully updated.` });
+      }
+      prevTasksRef.current = project.tasks;
+    }
+  }, [project.tasks, toast]);
 
 
   const handleStatusFilterChange = (status: TaskStatus) => {
@@ -86,6 +102,7 @@ export function TaskSection({ project, setProject, allMembers }: TaskSectionProp
   };
 
   const handleTaskUpdate = (updatedTask: Task, changedById: string) => {
+    let updateAborted = false;
     setProject(prevProject => {
         if (!prevProject) return undefined;
 
@@ -112,6 +129,7 @@ export function TaskSection({ project, setProject, allMembers }: TaskSectionProp
                     description: `Cannot close "${finalUpdatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
                     variant: "destructive",
                 });
+                updateAborted = true;
                 return prevProject; // Abort update
             }
         }
@@ -176,8 +194,6 @@ export function TaskSection({ project, setProject, allMembers }: TaskSectionProp
             });
         }
         
-        toast({ title: "Task Updated", description: `Task "${finalUpdatedTask.name}" has been successfully updated.` });
-
         return { ...prevProject, tasks: newTasks };
     });
   };
