@@ -7,7 +7,7 @@ interface TaskListProps {
   tasks: Task[];
   allTasks: Task[];
   allMembers: Member[];
-  onTaskUpdate: (task: Task) => void;
+  onTaskUpdate: (task: Task, changedById: string) => void;
   onSubtaskAdd: (parentId: string) => void;
   onEdit: (task: Task) => void;
   showProjectName?: boolean;
@@ -80,3 +80,4 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
     </Accordion>
   );
 }
+

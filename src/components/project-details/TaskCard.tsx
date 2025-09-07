@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -16,12 +17,15 @@ import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PROJECTS } from "@/lib/data";
 import { Button } from "../ui/button";
+import { MemberCombobox } from '../shared/MemberCombobox';
+import { Label } from '../ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 interface TaskCardProps {
   task: Task;
   allTasks: Task[];
   allMembers: Member[];
-  onTaskUpdate: (task: Task) => void;
+  onTaskUpdate: (task: Task, changedById: string) => void;
   onSubtaskAdd: (parentId: string) => void;
   onEdit: (task: Task) => void;
   showProjectName?: boolean;
@@ -31,6 +35,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isCoreTask, subtaskCount, children }: TaskCardProps) {
+  const [changedBy, setChangedBy] = useState("");
   const assignedMembers = allMembers.filter(m => task.assignedTo.includes(m.id));
   const assigner = allMembers.find(m => m.id === task.assignedBy);
 
@@ -44,7 +49,11 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
 
 
   const handleStatusChange = (newStatus: TaskStatus) => {
-    onTaskUpdate({ ...task, status: newStatus });
+    if (!changedBy) {
+        alert("Please select who is changing the status.");
+        return;
+    }
+    onTaskUpdate({ ...task, status: newStatus }, changedBy);
   };
 
   return (
@@ -140,7 +149,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                 ))}
                 </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
                {isCoreTask && (
                  <TooltipProvider>
                     <Tooltip>
@@ -159,9 +168,20 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                       <TooltipContent>Edit task</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <div className="w-full md:w-auto">
+                <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm">Changed by: {allMembers.find(m=>m.id===changedBy)?.name || "Select..."}</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <div className="p-2">
+                                <Label className="text-xs px-1">Who is changing status?</Label>
+                                <MemberCombobox members={allMembers} selectedMember={changedBy} setSelectedMember={setChangedBy} />
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                     <Select onValueChange={handleStatusChange} value={task.status}>
-                        <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectTrigger className="w-full md:w-[150px]">
                             <SelectValue placeholder="Change status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -178,3 +198,4 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
     </Card>
   );
 }
+

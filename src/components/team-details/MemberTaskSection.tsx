@@ -19,6 +19,7 @@ import { ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import { AddTaskDialog } from "../project-details/AddTaskDialog";
+import { logStore } from "@/lib/log-store";
 
 interface MemberTaskSectionProps {
   tasksByProject: { project: Project; tasks: Task[] }[];
@@ -37,13 +38,91 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
   const [parentForNewSubtask, setParentForNewSubtask] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   
-  const handleTaskUpdate = (updatedTask: Task) => {
-    setTasksByProject(prev => prev.map(p => ({
-        ...p,
-        tasks: p.tasks.map(t => t.id === updatedTask.id ? updatedTask : t)
-    })));
+  const allTasks = tasksByProject.flatMap(p => p.tasks);
+
+  const handleTaskUpdate = (updatedTask: Task, changedById: string) => {
+    const projectIndex = tasksByProject.findIndex(p => p.tasks.some(t => t.id === updatedTask.id));
+    if (projectIndex === -1) return;
+
+    let project = tasksByProject[projectIndex];
+    let newTasks = [...project.tasks];
+    const originalTask = newTasks.find(t => t.id === updatedTask.id);
+
+    if (!originalTask) return;
+
+    const statusChanged = originalTask.status !== updatedTask.status;
+
+    // Rule 1: Prevent closing a blocked task
+    if (updatedTask.status === 'CLOSED' && updatedTask.dependencyId) {
+        const dependency = allTasks.find(t => t.id === updatedTask.dependencyId);
+        if (dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP')) {
+            toast({
+                title: "Action Blocked",
+                description: `Cannot close "${updatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
+                variant: "destructive",
+            });
+            return;
+        }
+    }
+    
+    newTasks = newTasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+
+    // Rule 2: If a core task is being closed, close all its sub-tasks
+    if (!updatedTask.parentId && updatedTask.status === 'CLOSED' && originalTask.status !== 'CLOSED') {
+        newTasks = newTasks.map(t => {
+            if (t.parentId === updatedTask.id && t.status !== 'CLOSED') {
+                 logStore.add({
+                    taskId: t.id, taskName: t.name, projectId: project.project.id, projectName: project.project.name,
+                    previousStatus: t.status, newStatus: 'CLOSED', changedBy: changedById,
+                });
+                return { ...t, status: 'CLOSED' };
+            }
+            return t;
+        });
+    }
+
+    // Rule 3: If a dependency is reopened, reopen dependent tasks
+    if (originalTask.status === 'CLOSED' && (updatedTask.status === 'OPEN' || updatedTask.status === 'WIP')) {
+        const dependentTasks = allTasks.filter(t => t.dependencyId === updatedTask.id);
+        dependentTasks.forEach(depTask => {
+             const depTaskProjectIndex = tasksByProject.findIndex(p => p.tasks.some(t => t.id === depTask.id));
+             if (depTaskProjectIndex === -1) return;
+
+             setTasksByProject(prev => {
+                const newProjects = [...prev];
+                const targetProject = newProjects[depTaskProjectIndex];
+                targetProject.tasks = targetProject.tasks.map(t => {
+                    if (t.id === depTask.id && t.status === 'CLOSED') {
+                        logStore.add({
+                            taskId: t.id, taskName: t.name, projectId: targetProject.project.id, projectName: targetProject.project.name,
+                            previousStatus: 'CLOSED', newStatus: 'OPEN', changedBy: changedById,
+                        });
+                        return { ...t, status: 'OPEN' };
+                    }
+                    return t;
+                });
+                return newProjects;
+             });
+        });
+    }
+
+
+    if (statusChanged) {
+        logStore.add({
+            taskId: originalTask.id, taskName: originalTask.name, projectId: project.project.id, projectName: project.project.name,
+            previousStatus: originalTask.status, newStatus: updatedTask.status, changedBy: changedById,
+        });
+    }
+    
+    setTasksByProject(prev => {
+        const newProjects = [...prev];
+        newProjects[projectIndex].tasks = newTasks;
+        return newProjects;
+    });
+
     toast({ title: "Task Updated", description: `Task "${updatedTask.name}" has been successfully updated.` });
   }; 
+
 
   const handleTaskAdd = (newTask: Task) => {
     let finalTask = { ...newTask };
@@ -121,8 +200,6 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
     });
   };
   
-  const allTasks = tasksByProject.flatMap(p => p.tasks);
-
   const filteredProjects = tasksByProject.map(p => {
     const filteredTasks = p.tasks.filter(task => {
         if (statusFilters.size === 0) return true;
@@ -244,3 +321,4 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
     </div>
   );
 }
+

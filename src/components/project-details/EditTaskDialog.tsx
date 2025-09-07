@@ -27,7 +27,7 @@ import { TaskCombobox } from "../shared/TaskCombobox";
 interface EditTaskDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onTaskUpdate: (task: Task) => void;
+  onTaskUpdate: (task: Task, changedById: string) => void;
   allMembers: Member[];
   projectTasks: Task[];
   taskToEdit: Task;
@@ -76,7 +76,7 @@ export function EditTaskDialog({ isOpen, setIsOpen, onTaskUpdate, allMembers, pr
       dependencyId: dependencyId || undefined,
     };
 
-    onTaskUpdate(updatedTask);
+    onTaskUpdate(updatedTask, assignedBy); // Pass who made the change
     setIsOpen(false);
   };
 
@@ -133,7 +133,7 @@ export function EditTaskDialog({ isOpen, setIsOpen, onTaskUpdate, allMembers, pr
                 </div>
             </div>
             <div className="space-y-2">
-              <Label>Assigned By</Label>
+              <Label>Assigned By (Editor)</Label>
               <MemberCombobox members={allMembers} selectedMember={assignedBy} setSelectedMember={setAssignedBy} />
             </div>
             <div className="space-y-2">
@@ -181,3 +181,4 @@ export function EditTaskDialog({ isOpen, setIsOpen, onTaskUpdate, allMembers, pr
     </Dialog>
   );
 }
+
