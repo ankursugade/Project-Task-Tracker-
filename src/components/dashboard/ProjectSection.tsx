@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlusCircle, Filter } from "lucide-react";
+import { PlusCircle, Filter, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PROJECTS, MEMBERS } from "@/lib/data";
 import type { Project, ProjectStage } from "@/lib/types";
@@ -17,6 +17,7 @@ import {
 import { AddProjectDialog } from "./AddProjectDialog";
 import { MemberCombobox } from "../shared/MemberCombobox";
 import { ProjectSummary } from "./ProjectSummary";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const projectStages: ProjectStage[] = ["Pitch", "Design", "Construction", "Handover"];
 
@@ -26,6 +27,8 @@ export function ProjectSection() {
   const [leadFilter, setLeadFilter] = useState<string>("");
   const [captainFilter, setCaptainFilter] = useState<string>("");
   const [isAddProjectOpen, setAddProjectOpen] = useState(false);
+  const [view, setView] = useState<"grid" | "list">("grid");
+
 
   const handleStageFilterChange = (stage: ProjectStage) => {
     setStageFilters((prev) => {
@@ -65,6 +68,14 @@ export function ProjectSection() {
           </h2>
         </button>
         <div className="flex items-center gap-2">
+           <ToggleGroup type="single" value={view} onValueChange={(value) => {if (value) setView(value as "grid" | "list")}}>
+            <ToggleGroupItem value="grid" aria-label="Grid view">
+              <LayoutGrid className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="List view">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
@@ -119,7 +130,7 @@ export function ProjectSection() {
 
       <ProjectSummary projects={projects} onStageClick={handleSummaryCardClick} />
 
-      <ProjectList projects={filteredProjects} />
+      <ProjectList projects={filteredProjects} view={view} />
       <AddProjectDialog
         isOpen={isAddProjectOpen}
         setIsOpen={setAddProjectOpen}
