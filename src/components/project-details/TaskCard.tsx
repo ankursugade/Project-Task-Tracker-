@@ -191,16 +191,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                   </div>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                {!isSubTask && (
-                  <TooltipProvider>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={() => onSubtaskAdd(task.id)}><MessageSquarePlus className="h-4 w-4" /></Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Add sub-task</TooltipContent>
-                      </Tooltip>
-                  </TooltipProvider>
-                  )}
+                
                   <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -260,6 +251,14 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                   </div>
               </div>
           </div>
+          {!isSubTask && (
+            <div className="pt-2">
+                <Button variant="outline" size="sm" onClick={() => onSubtaskAdd(task.id)}>
+                    <MessageSquarePlus className="mr-2 h-4 w-4" />
+                    Add Sub-task
+                </Button>
+            </div>
+          )}
         </CardContent>
     </>
   );
