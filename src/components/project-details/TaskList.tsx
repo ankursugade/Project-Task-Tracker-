@@ -2,8 +2,9 @@ import type { Task, Member } from "@/lib/types";
 import { TaskCard } from "./TaskCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ChevronsUpDown } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { StatusBadge } from "../shared/StatusBadge";
+import { Button } from "../ui/button";
 
 interface TaskListProps {
   tasks: Task[];
@@ -44,8 +45,8 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
 
         return (
             <AccordionItem value={coreTask.id} key={coreTask.id} className="border-none">
-                <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div>svg]:rotate-180" disabled={!hasSubtasks}>
-                    <TaskCard
+                 <div className="relative">
+                     <TaskCard
                         task={coreTask}
                         allTasks={allTasks}
                         allMembers={allMembers}
@@ -54,8 +55,9 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
                         onEdit={onEdit}
                         showProjectName={showProjectName}
                         isSubTask={false}
-                    />
-                </AccordionTrigger>
+                        isAccordionTrigger={hasSubtasks}
+                     />
+                 </div>
               {hasSubtasks && (
                 <AccordionContent className="pt-0">
                   <div className="pl-8 mt-2 space-y-2 border-l-2 border-dashed ml-7">
