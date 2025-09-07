@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { PROJECTS, MEMBERS } from "@/lib/data";
 import { Header } from "@/components/Header";
 import { ProjectDetailHeader } from "@/components/project-details/ProjectDetailHeader";
@@ -16,20 +16,16 @@ import html2canvas from "html2canvas";
 import { ProjectReport } from "@/components/project-details/ProjectReport";
 import { createRoot } from "react-dom/client";
 
-// This page needs to be a client component to manage state, but we can't fetch data directly in a client component's main body.
-// A common pattern is to have a parent Server Component fetch the data and pass it to a child Client Component.
-// For this case, we'll use a simplified approach since we have static data.
-// In a real app, you'd fetch this in a parent component or use a library like SWR/React Query.
-
-export default function ProjectPage({ params }: { params: { id: string } }) {
-  const initialProject = PROJECTS.find((p) => p.id === params.id);
+export default function ProjectPage() {
+  const params = useParams();
+  const projectId = typeof params.id === 'string' ? params.id : '';
+  const initialProject = PROJECTS.find((p) => p.id === projectId);
+  
   const [project, setProject] = useState<Project | undefined>(initialProject);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const { toast } = useToast();
   
   if (!project) {
-    // We can call notFound() directly if the component is simple.
-    // If it had hooks before the check, we'd need to render null and handle it.
     notFound();
   }
 
