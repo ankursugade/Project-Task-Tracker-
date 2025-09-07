@@ -84,6 +84,34 @@ const mepTaskTemplate = [
             'HVAC Calculation sheet HAP Calculations', 'HVAC Comfort cooling layout', 'HVAC critical cooling layout', 'HVAC schematic layout'
         ]},
     ]},
+    // --- CORE: PHE & FF TENDER ---
+    { core: true, name: 'PHE & FF TENDER', duration: 6, subtasks: [
+        { name: 'Water Supply & Drainage Schematic', duration: 3, dependsOn: 'PHE & FF DBR Update' },
+        { name: 'Water Supply Layout', duration: 3, dependsOn: 'Water Supply & Drainage Schematic' },
+        { name: 'Drainage Layout', duration: 3, dependsOn: 'Water Supply & Drainage Schematic' },
+        { name: 'Fire Fighting (Hydrant & Sprinkler) Layout', duration: 3, dependsOn: 'Water Supply & Drainage Schematic' },
+        { name: 'PHE & FF Tender BOQ', duration: 2, dependsOn: [
+            'Water Supply Layout', 'Drainage Layout', 'Fire Fighting (Hydrant & Sprinkler) Layout'
+        ]},
+    ]},
+    // --- CORE: IBMS & ELV TENDER ---
+    { core: true, name: 'IBMS & ELV TENDER', duration: 6, subtasks: [
+        { name: 'IBMS & ELV System Architecture', duration: 3, dependsOn: 'IBMS & ELV Update' },
+        { name: 'CCTV & ACS Layout', duration: 3, dependsOn: 'IBMS & ELV System Architecture' },
+        { name: 'Fire Alarm & PA System Layout', duration: 3, dependsOn: 'IBMS & ELV System Architecture' },
+        { name: 'IBMS & ELV Tender BOQ', duration: 2, dependsOn: [
+            'CCTV & ACS Layout', 'Fire Alarm & PA System Layout'
+        ]},
+    ]},
+    // --- CORE: IT PASSIVE TENDER ---
+    { core: true, name: 'IT PASSIVE TENDER', duration: 5, subtasks: [
+        { name: 'IT Passive System Architecture', duration: 2, dependsOn: 'IT Passive DBR Update' },
+        { name: 'IT Passive Containment Layout', duration: 3, dependsOn: 'IT Passive System Architecture' },
+        { name: 'Server & Rack Layout', duration: 2, dependsOn: 'IT Passive Containment Layout' },
+        { name: 'IT Passive Tender BOQ', duration: 2, dependsOn: [
+            'IT Passive Containment Layout', 'Server & Rack Layout'
+        ]},
+    ]},
 ];
 
 
