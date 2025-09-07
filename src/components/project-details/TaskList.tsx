@@ -2,6 +2,8 @@ import type { Task, Member } from "@/lib/types";
 import { TaskCard } from "./TaskCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ChevronsUpDown } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { StatusBadge } from "../shared/StatusBadge";
 
 interface TaskListProps {
   tasks: Task[];
@@ -35,24 +37,26 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
   }
   
   return (
-    <div className="space-y-4">
+    <Accordion type="single" collapsible className="w-full space-y-4">
       {coreTasks.map((coreTask) => {
         const subTasks = subTasksByParentId[coreTask.id] || [];
+        const hasSubtasks = subTasks.length > 0;
+
         return (
-          <Accordion type="single" collapsible key={coreTask.id} className="w-full">
-            <AccordionItem value={coreTask.id} className="border-none">
-              <TaskCard
-                task={coreTask}
-                allTasks={allTasks}
-                allMembers={allMembers}
-                onTaskUpdate={onTaskUpdate}
-                onSubtaskAdd={onSubtaskAdd}
-                onEdit={onEdit}
-                showProjectName={showProjectName}
-                isCoreTask={true}
-                subtaskCount={subTasks.length}
-              />
-              {subTasks.length > 0 && (
+            <AccordionItem value={coreTask.id} key={coreTask.id} className="border-none">
+                <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div>svg]:rotate-180" disabled={!hasSubtasks}>
+                    <TaskCard
+                        task={coreTask}
+                        allTasks={allTasks}
+                        allMembers={allMembers}
+                        onTaskUpdate={onTaskUpdate}
+                        onSubtaskAdd={onSubtaskAdd}
+                        onEdit={onEdit}
+                        showProjectName={showProjectName}
+                        isSubTask={false}
+                    />
+                </AccordionTrigger>
+              {hasSubtasks && (
                 <AccordionContent className="pt-0">
                   <div className="pl-8 mt-2 space-y-2 border-l-2 border-dashed ml-7">
                     {subTasks.map(subTask => (
@@ -65,16 +69,15 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
                         onSubtaskAdd={onSubtaskAdd}
                         onEdit={onEdit}
                         showProjectName={showProjectName}
-                        isCoreTask={false}
+                        isSubTask={true}
                       />
                     ))}
                   </div>
                 </AccordionContent>
               )}
             </AccordionItem>
-          </Accordion>
         )
       })}
-    </div>
+    </Accordion>
   );
 }

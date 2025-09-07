@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2, GitBranch, ChevronsUpDown } from "lucide-react";
+import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2, GitBranch } from "lucide-react";
 import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PROJECTS } from "@/lib/data";
@@ -20,7 +20,6 @@ import { Button } from "../ui/button";
 import { MemberCombobox } from '../shared/MemberCombobox';
 import { Label } from '../ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { AccordionTrigger } from '../ui/accordion';
 
 interface TaskCardProps {
   task: Task;
@@ -30,11 +29,10 @@ interface TaskCardProps {
   onSubtaskAdd: (parentId: string) => void;
   onEdit: (task: Task) => void;
   showProjectName?: boolean;
-  isCoreTask?: boolean;
-  subtaskCount?: number;
+  isSubTask?: boolean;
 }
 
-export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isCoreTask, subtaskCount }: TaskCardProps) {
+export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isSubTask = false }: TaskCardProps) {
   const [changedBy, setChangedBy] = useState("");
   const assignedMembers = allMembers.filter(m => task.assignedTo.includes(m.id));
   const assigner = allMembers.find(m => m.id === task.assignedBy);
@@ -47,6 +45,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
   const dependentTasks = allTasks.filter(t => t.dependencyId === task.id);
   const isBlocking = dependentTasks.length > 0 && task.status !== 'CLOSED';
 
+  const subtaskCount = allTasks.filter(t => t.parentId === task.id).length;
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     if (!changedBy) {
@@ -55,12 +54,8 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
     }
     onTaskUpdate({ ...task, status: newStatus }, changedBy);
   };
-
-  const stopPropagation = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-  };
-
-  const cardContent = (
+  
+  return (
      <Card className={cn("transition-all duration-300 w-full", 
         isBlocked && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800",
         isBlocking && "bg-purple-50 border-purple-400 ring-2 ring-purple-200 dark:bg-purple-950 dark:border-purple-700 dark:ring-purple-800"
@@ -99,7 +94,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                 <span>Assigned by {assigner.name}</span>
               </div>
             }
-             {isCoreTask && subtaskCount !== undefined && (
+             {!isSubTask && subtaskCount > 0 && (
               <div className="flex items-center gap-2">
                 <GitCommitHorizontal className="h-4 w-4" />
                 <span>{subtaskCount} sub-tasks</span>
@@ -134,7 +129,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
             </div>
         )}
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4" onClick={stopPropagation} onTouchEnd={stopPropagation}>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground"/>
                 <div className="flex -space-x-2">
@@ -154,7 +149,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                 </div>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-               {isCoreTask && (
+               {!isSubTask && (
                  <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -200,22 +195,4 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
       </CardContent>
     </Card>
   );
-
-  if (isCoreTask) {
-    const hasSubtasks = subtaskCount && subtaskCount > 0;
-    return (
-      <div className="relative">
-        <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div>svg]:rotate-180" disabled={!hasSubtasks}>
-            <div className="relative w-full">
-              {cardContent}
-              {hasSubtasks && (
-                 <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200 absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              )}
-            </div>
-        </AccordionTrigger>
-      </div>
-    );
-  }
-
-  return cardContent;
 }
