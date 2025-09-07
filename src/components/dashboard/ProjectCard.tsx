@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import {
   Card,
@@ -13,6 +14,8 @@ import { MEMBERS } from "@/lib/data";
 import type { Project } from "@/lib/types";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { UserX } from "lucide-react";
+import { Badge } from "../ui/badge";
 
 interface ProjectCardProps {
   project: Project;
@@ -22,6 +25,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const { name, stage, tasks, projectLead, designCaptain } = project;
   const completedTasks = tasks.filter((task) => task.status === "CLOSED").length;
   const progress = tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0;
+  const unassignedTasks = tasks.filter(task => task.assignedTo.length === 0).length;
 
   const lead = MEMBERS.find((m) => m.id === projectLead);
   const captain = MEMBERS.find((m) => m.id === designCaptain);
@@ -36,7 +40,24 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </CardTitle>
             <StatusBadge status={stage} />
           </div>
-          <CardDescription>{tasks.length} tasks</CardDescription>
+          <CardDescription className="flex items-center gap-4">
+            <span>{tasks.length} tasks</span>
+             {unassignedTasks > 0 && (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Badge variant="destructive" className="flex items-center gap-1 bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800">
+                                <UserX className="h-3 w-3" />
+                                {unassignedTasks} unassigned
+                            </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{unassignedTasks} task(s) need assignments.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+             )}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex-grow">
           <div>

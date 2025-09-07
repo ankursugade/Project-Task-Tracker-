@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +43,7 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd }: AddProject
       stage,
       projectLead,
       designCaptain,
-      tasks: copyFrom ? PROJECTS.find(p => p.id === copyFrom)?.tasks.map(t => ({...t, id: `task-${Date.now()}-${Math.random()}`})) || [] : [],
+      tasks: copyFrom ? PROJECTS.find(p => p.id === copyFrom)?.tasks.map(t => ({...t, id: `task-${Date.now()}-${Math.random()}`, assignedTo: []})) || [] : [],
     };
     onProjectAdd(newProject);
     setIsOpen(false);
