@@ -59,9 +59,11 @@ export function ProjectSection() {
   return (
     <section>
        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
-        <h2 className="text-2xl font-bold tracking-tight font-headline">
-          Projects Dashboard
-        </h2>
+        <button onClick={clearFilters} className="text-left hover:opacity-80 transition-opacity">
+          <h2 className="text-2xl font-bold tracking-tight font-headline">
+            Projects Dashboard
+          </h2>
+        </button>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
