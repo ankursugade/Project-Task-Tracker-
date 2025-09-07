@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PlusCircle, Filter, LayoutGrid, List } from "lucide-react";
+import { PlusCircle, Filter, LayoutGrid, List, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { projectStore, memberStore } from "@/lib/store";
 import type { Project, ProjectStage } from "@/lib/types";
@@ -19,6 +19,13 @@ import { AddProjectDialog } from "./AddProjectDialog";
 import { MemberCombobox } from "../shared/MemberCombobox";
 import { ProjectSummary } from "./ProjectSummary";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { createRoot } from "react-dom/client";
+import { useToast } from "@/hooks/use-toast";
+import { AllProjectsReport } from "./AllProjectsReport";
+import { summarizeAllProjects } from "@/ai/flows/summarizeAllProjectsFlow";
+
 
 const projectStages: ProjectStage[] = ["Pitch", "Design", "Construction", "Handover"];
 
@@ -33,6 +40,9 @@ export function ProjectSection() {
   const [captainFilter, setCaptainFilter] = useState<string>("");
   const [isAddProjectOpen, setAddProjectOpen] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const { toast } = useToast();
+
 
   // Effect to sync with the client-side store after mounting
   useEffect(() => {
@@ -79,6 +89,77 @@ export function ProjectSection() {
     projectStore.addProject(newProject);
     setProjects(projectStore.getProjects());
   };
+  
+  const exportToPDF = async () => {
+    setIsPdfLoading(true);
+    const reportRoot = document.createElement('div');
+    reportRoot.style.position = 'absolute';
+    reportRoot.style.left = '-9999px';
+    document.body.appendChild(reportRoot);
+    const root = createRoot(reportRoot);
+
+    try {
+        const projectsForSummary = projects.map(project => {
+            const blockedTasks = project.tasks.filter(task => {
+                if (!task.dependencyId) return false;
+                const dependency = project.tasks.find(d => d.id === task.dependencyId);
+                return dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP');
+            }).map(task => {
+                const dependency = project.tasks.find(d => d.id === task.dependencyId)!;
+                const assignedToDependency = allMembers
+                    .filter(m => dependency.assignedTo.includes(m.id))
+                    .map(m => m.name)
+                    .join(", ");
+                return `"${task.name}" is blocked by "${dependency.name}" (assigned to: ${assignedToDependency})`;
+            });
+
+            return {
+                projectName: project.name,
+                projectStage: project.stage,
+                taskStatuses: project.tasks.map(t => t.status),
+                blockedTasks: blockedTasks,
+            };
+        });
+
+        const aiSummary = await summarizeAllProjects({
+            projects: projectsForSummary,
+        });
+
+        await new Promise<void>((resolve) => {
+          root.render(
+            <AllProjectsReport
+              projects={projects} 
+              allMembers={allMembers}
+              aiSummary={aiSummary} 
+              onRendered={() => resolve()}
+            />
+          );
+        });
+
+        const reportElement = reportRoot.children[0] as HTMLElement;
+        const canvas = await html2canvas(reportElement, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`all_projects_summary_${new Date().toISOString().split('T')[0]}.pdf`);
+        
+        toast({ title: "PDF Exported", description: "All projects summary has been downloaded."});
+    } catch(e) {
+        console.error("PDF Export Error: ", e);
+        toast({ title: "Export Failed", description: "Could not generate PDF report.", variant: "destructive"});
+    } finally {
+        root.unmount();
+        document.body.removeChild(reportRoot);
+        setIsPdfLoading(false);
+    }
+  }
+
 
   return (
     <section>
@@ -89,6 +170,10 @@ export function ProjectSection() {
           </h2>
         </button>
         <div className="flex items-center gap-2">
+          <Button onClick={exportToPDF} disabled={isPdfLoading} variant="outline">
+              {isPdfLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+              Export All
+          </Button>
            <ToggleGroup type="single" value={view} onValueChange={(value) => {if (value) setView(value as "grid" | "list")}}>
             <ToggleGroupItem value="grid" aria-label="Grid view">
               <LayoutGrid className="h-4 w-4" />
@@ -101,7 +186,7 @@ export function ProjectSection() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
                 <Filter className="mr-2 h-4 w-4" />
-                Filter Projects
+                Filter
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end">
