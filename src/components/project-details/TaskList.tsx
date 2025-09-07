@@ -72,18 +72,20 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
         return (
             <AccordionItem value={coreTask.id} key={coreTask.id} className="border-none">
               <Card className="data-[state=open]:rounded-b-none transition-all data-[state=open]:ring-2 data-[state=open]:ring-primary">
-                 <AccordionTrigger className="p-0 hover:no-underline w-full flex">
-                      <TaskCard
-                          task={coreTask}
-                          allTasks={allTasks}
-                          allMembers={allMembers}
-                          onTaskUpdate={onTaskUpdate}
-                          onSubtaskAdd={onSubtaskAdd}
-                          onEdit={onEdit}
-                          showProjectName={showProjectName}
-                          isAccordionTrigger={true}
-                      />
-                 </AccordionTrigger>
+                 <TaskCard
+                      task={coreTask}
+                      allTasks={allTasks}
+                      allMembers={allMembers}
+                      onTaskUpdate={onTaskUpdate}
+                      onSubtaskAdd={onSubtaskAdd}
+                      onEdit={onEdit}
+                      showProjectName={showProjectName}
+                      isAccordionTrigger={true}
+                  >
+                    <AccordionTrigger className="p-0 hover:no-underline absolute right-4 top-1/2 -translate-y-1/2">
+                        <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                    </AccordionTrigger>
+                 </TaskCard>
               </Card>
               <AccordionContent className="p-0 rounded-b-lg">
                   <div className="pt-0">
