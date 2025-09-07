@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AddProjectDialog } from "./AddProjectDialog";
 import { MemberCombobox } from "../shared/MemberCombobox";
+import { ProjectSummary } from "./ProjectSummary";
 
 const projectStages: ProjectStage[] = ["Pitch", "Design", "Construction", "Handover"];
 
@@ -53,16 +54,16 @@ export function ProjectSection() {
 
   return (
     <section>
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
         <h2 className="text-2xl font-bold tracking-tight font-headline">
-          Projects Summary
+          Projects Dashboard
         </h2>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
                 <Filter className="mr-2 h-4 w-4" />
-                Filter
+                Filter Projects
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end">
@@ -109,6 +110,9 @@ export function ProjectSection() {
           </Button>
         </div>
       </div>
+
+      <ProjectSummary projects={projects} />
+
       <ProjectList projects={filteredProjects} />
       <AddProjectDialog
         isOpen={isAddProjectOpen}
