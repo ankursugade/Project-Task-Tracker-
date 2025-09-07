@@ -8,7 +8,8 @@ import { addDays, isSaturday, isSunday } from 'date-fns';
 function calculateEndDate(startDate: Date, durationDays: number): Date {
   let currentDate = new Date(startDate);
   let daysAdded = 0;
-  while (daysAdded < durationDays - 1) {
+  // durationDays - 1 because the start date counts as the first day.
+  while (daysAdded < durationDays - 1) { 
     currentDate = addDays(currentDate, 1);
     if (!isSaturday(currentDate) && !isSunday(currentDate)) {
       daysAdded++;
@@ -32,8 +33,8 @@ export const MEMBERS: Member[] = [
   { id: 'mem-8', name: 'Karan Malhotra' },
 ];
 
-const projectLeadIds = ['mem-1', 'mem-2', 'mem-3'];
-const designCaptainIds = ['mem-4', 'mem-5', 'mem-6'];
+const projectLeadIds = ['mem-1', 'mem-2', 'mem-3', 'mem-4', 'mem-5', 'mem-6'];
+const designCaptainIds = ['mem-7', 'mem-8', 'mem-1', 'mem-2', 'mem-3', 'mem-4'];
 
 // =================================================================================
 // TASK TEMPLATE
@@ -52,7 +53,7 @@ const mepTaskTemplate = [
         { name: 'Electrical Calculations', duration: 2, dependsOn: ['INTERIOR LAYOUT- CAD', 'HVAC Calculations'] },
         { name: 'HVAC DBR Update', duration: 1, dependsOn: 'HVAC Calculations' },
         { name: 'Electrical DBR Update', duration: 1, dependsOn: 'Electrical Calculations' },
-        { name: 'PHE & FF DBR Update', duration: 2, dependsOn: 'Electrical Calculations' },
+        { name: 'PHE & FF DBR Update', duration: 2, dependsOn: 'Electrical DBR Update' },
         { name: 'IBMS & ELV Update', duration: 2, dependsOn: 'PHE & FF DBR Update' },
     ]},
     // --- CORE: IT Passive DBR ---
@@ -127,10 +128,16 @@ const generateTasksForProject = (projectIndex: number, projectStartDate: Date): 
     let currentDayOffset = 0;
     let coreTaskNumber = 1;
 
-    mepTaskTemplate.forEach(coreTaskInfo => {
+    mepTaskTemplate.forEach((coreTaskInfo, coreIndex) => {
         const coreTaskId = `t${projectIndex}-${taskCounter++}`;
         const coreTaskName = `${coreTaskNumber}. ${coreTaskInfo.name}`;
-        const coreTaskStartDate = addDays(projectStartDate, currentDayOffset);
+        
+        let coreTaskStartDate = addDays(projectStartDate, currentDayOffset);
+        // Ensure start date is not on a weekend
+        while(isSaturday(coreTaskStartDate) || isSunday(coreTaskStartDate)) {
+            coreTaskStartDate = addDays(coreTaskStartDate, 1);
+        }
+        
         const coreTaskEndDate = calculateEndDate(coreTaskStartDate, coreTaskInfo.duration);
         
         idMap[coreTaskInfo.name] = coreTaskId;
@@ -139,20 +146,25 @@ const generateTasksForProject = (projectIndex: number, projectStartDate: Date): 
             id: coreTaskId,
             name: coreTaskName,
             description: `Core deliverables for ${coreTaskInfo.name}.`,
-            status: statuses[(projectIndex + taskCounter) % statuses.length],
+            status: statuses[(projectIndex + coreIndex) % statuses.length],
             startDate: coreTaskStartDate,
             endDate: coreTaskEndDate,
-            assignedTo: [MEMBERS[(taskCounter) % MEMBERS.length].id, MEMBERS[(taskCounter + 1) % MEMBERS.length].id],
-            assignedBy: projectLeadIds[(projectIndex - 1) % projectLeadIds.length],
+            assignedTo: [MEMBERS[(coreIndex) % MEMBERS.length].id, MEMBERS[(coreIndex + 1) % MEMBERS.length].id],
+            assignedBy: projectLeadIds[(projectIndex) % projectLeadIds.length],
             parentId: undefined,
             revision: 0,
         });
 
         let subTaskNumber = 1;
-        coreTaskInfo.subtasks.forEach(subTaskInfo => {
+        coreTaskInfo.subtasks.forEach((subTaskInfo, subIndex) => {
             const subTaskId = `t${projectIndex}-${taskCounter++}`;
             const subTaskName = `${coreTaskNumber}.${subTaskNumber}. ${subTaskInfo.name}`;
-            const subTaskStartDate = addDays(coreTaskStartDate, Math.floor(Math.random() * 2));
+            
+            let subTaskStartDate = addDays(coreTaskStartDate, subIndex % 2); // Stagger sub-tasks a bit
+             while(isSaturday(subTaskStartDate) || isSunday(subTaskStartDate)) {
+                subTaskStartDate = addDays(subTaskStartDate, 1);
+            }
+
             const subTaskEndDate = calculateEndDate(subTaskStartDate, subTaskInfo.duration);
             
             idMap[subTaskInfo.name] = subTaskId;
@@ -179,11 +191,11 @@ const generateTasksForProject = (projectIndex: number, projectStartDate: Date): 
                 id: subTaskId,
                 name: subTaskName,
                 description: `Detailed task for ${subTaskInfo.name}.`,
-                status: statuses[(projectIndex + taskCounter) % statuses.length],
+                status: statuses[(projectIndex + subIndex) % statuses.length],
                 startDate: subTaskStartDate,
                 endDate: subTaskEndDate,
-                assignedTo: [MEMBERS[(taskCounter) % MEMBERS.length].id],
-                assignedBy: designCaptainIds[(projectIndex - 1) % designCaptainIds.length],
+                assignedTo: [MEMBERS[(subIndex) % MEMBERS.length].id],
+                assignedBy: designCaptainIds[(projectIndex) % designCaptainIds.length],
                 parentId: coreTaskId,
                 dependencyId: dependencyId,
                 revision: 0,
@@ -191,7 +203,7 @@ const generateTasksForProject = (projectIndex: number, projectStartDate: Date): 
             subTaskNumber++;
         });
 
-        currentDayOffset += coreTaskInfo.duration + Math.floor(Math.random() * 2); // Stagger core tasks
+        currentDayOffset += coreTaskInfo.duration + (coreIndex % 2); // Stagger core tasks
         coreTaskNumber++;
     });
 
@@ -206,7 +218,7 @@ const projectStages: ProjectStage[] = ['Pitch', 'Design', 'Construction', 'Hando
 export const PROJECTS: Project[] = Array.from({ length: 6 }, (_, i) => {
   const projectIndex = i + 1;
   const projectStartDate = new Date();
-  projectStartDate.setDate(projectStartDate.getDate() + i * 5); // Stagger project start dates
+  projectStartDate.setDate(projectStartDate.getDate() + i * 7); // Stagger project start dates by a week
 
   return {
     id: `proj-${projectIndex}`,
