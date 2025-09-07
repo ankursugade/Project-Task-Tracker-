@@ -37,7 +37,7 @@ interface TaskCardProps {
   children?: React.ReactNode;
 }
 
-export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isSubTask = false, isAccordionTrigger = false, children }: TaskCardProps) {
+export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isSubTask = false, isAccordionTrigger = false }: TaskCardProps) {
   const [isMemberPopoverOpen, setMemberPopoverOpen] = useState(false);
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | null>(null);
@@ -87,15 +87,15 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
     }
   }
 
-  const CardWrapper = isAccordionTrigger ? 'div' : 'div';
-  const TitleWrapper = isAccordionTrigger ? 'div' : CardTitle;
-
-
-  const cardContent = (
-    <>
+  return (
+     <Card className={cn("transition-all duration-300 w-full group relative", 
+        isBlocked && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800",
+        isBlocking && "bg-purple-50 border-purple-400 ring-2 ring-purple-200 dark:bg-purple-950 dark:border-purple-700 dark:ring-purple-800",
+        isAccordionTrigger && "border-none shadow-none"
+    )}>
        <CardHeader>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <TitleWrapper className="text-xl font-bold pr-10 text-left">{task.name}</TitleWrapper>
+              <CardTitle className="text-xl font-bold pr-10 text-left">{task.name}</CardTitle>
               <div className="flex items-center gap-2 md:min-w-[120px] justify-end">
                   {project && 
                     <TooltipProvider>
@@ -124,7 +124,6 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                      </TooltipProvider>
                   )}
                   <StatusBadge status={task.status} />
-                  {children}
               </div>
           </div>
           <CardDescription className="text-left">{task.description}</CardDescription>
@@ -260,16 +259,6 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
             </div>
           )}
         </CardContent>
-    </>
-  );
-
-  return (
-     <Card className={cn("transition-all duration-300 w-full group relative", 
-        isBlocked && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800",
-        isBlocking && "bg-purple-50 border-purple-400 ring-2 ring-purple-200 dark:bg-purple-950 dark:border-purple-700 dark:ring-purple-800",
-        isAccordionTrigger && "border-none shadow-none"
-    )}>
-        {cardContent}
     </Card>
   );
 }
