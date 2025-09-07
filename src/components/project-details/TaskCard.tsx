@@ -67,11 +67,13 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
   }
   
   const handlePopoverOpenChange = (open: boolean) => {
-    setMemberPopoverOpen(open);
     if (!open) {
       // Reset when popover closes
+      setMemberPopoverOpen(false);
       setShowAllMembers(false);
       setSelectedStatus(null);
+    } else {
+        setMemberPopoverOpen(true);
     }
   }
 
@@ -87,8 +89,6 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
         });
     }
   }
-
-  const membersForPopover = showAllMembers ? allMembers : assignedMembers;
 
   return (
      <Card className={cn("transition-all duration-300 w-full group", 
@@ -214,18 +214,18 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                   </TooltipProvider>
                   <div className="flex items-center gap-2 mt-2 sm:mt-0">
                       <Popover open={isMemberPopoverOpen} onOpenChange={handlePopoverOpenChange}>
-                          <PopoverTrigger asChild>
                             <Select onValueChange={handleStatusSelect} value={task.status}>
-                                <SelectTrigger className="w-full md:w-[150px]">
-                                    <SelectValue placeholder="Change status" />
-                                </SelectTrigger>
+                                <PopoverTrigger asChild>
+                                    <SelectTrigger className="w-full md:w-[150px]">
+                                        <SelectValue placeholder="Change status" />
+                                    </SelectTrigger>
+                                </PopoverTrigger>
                                 <SelectContent>
                                     <SelectItem value="OPEN">Open</SelectItem>
                                     <SelectItem value="WIP">In Progress</SelectItem>
                                     <SelectItem value="CLOSED">Closed</SelectItem>
                                 </SelectContent>
                             </Select>
-                          </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="end">
                            <Command>
                             <CommandInput placeholder="Search member..."/>
