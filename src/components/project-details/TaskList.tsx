@@ -3,7 +3,6 @@ import { TaskCard } from "./TaskCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -50,8 +49,7 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
       {coreTasks.map((coreTask) => {
         const subTasks = subTasksByParentId[coreTask.id] || [];
         const hasSubtasks = subTasks.length > 0;
-        const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === coreTask.id)) : undefined;
-
+        
         if (!hasSubtasks) {
              return (
                  <TaskCard
@@ -68,9 +66,12 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
             )
         }
 
+        const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === coreTask.id)) : undefined;
+
         return (
             <AccordionItem value={coreTask.id} key={coreTask.id} className="border-none">
-                 <AccordionTrigger className="p-0 hover:no-underline w-full flex rounded-lg data-[state=open]:rounded-b-none [&[data-state=open]>div]:rounded-b-none">
+              <Card className="data-[state=open]:rounded-b-none transition-all">
+                 <AccordionTrigger className="p-0 hover:no-underline w-full flex">
                      <CardHeader className="w-full">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                            <CardTitle className="text-xl font-bold font-headline pr-10">{coreTask.name}</CardTitle>
@@ -78,7 +79,7 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
                                {project && 
                                  <TooltipProvider>
                                    <Tooltip>
-                                     <TooltipTrigger>
+                                     <TooltipTrigger asChild>
                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                          <Briefcase className="h-3 w-3" />
                                          <span>{project.name}</span>
@@ -95,7 +96,8 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
                         <CardDescription>{coreTask.description}</CardDescription>
                      </CardHeader>
                  </AccordionTrigger>
-              <AccordionContent className="p-0 border-t-0 rounded-b-lg">
+              </Card>
+              <AccordionContent className="p-0 rounded-b-lg">
                   <div className="pt-0">
                      <div className="border-t">
                         <TaskCard
