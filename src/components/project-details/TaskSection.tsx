@@ -93,6 +93,7 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
             allTasks={project.tasks}
             allMembers={allMembers}
             onTaskUpdate={handleTaskUpdate}
+            showProjectName={false}
         />
 
         <AddTaskDialog

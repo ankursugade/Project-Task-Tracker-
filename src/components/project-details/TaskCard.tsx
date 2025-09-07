@@ -12,24 +12,28 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, User, Users } from "lucide-react";
-import type { Task, TaskStatus, Member } from "@/lib/types";
+import { Calendar, User, Users, Briefcase } from "lucide-react";
+import type { Task, TaskStatus, Member, Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { highlightDependentTasks } from "@/ai/flows/highlight-dependent-tasks";
+import { PROJECTS } from "@/lib/data";
 
 interface TaskCardProps {
   task: Task;
   allTasks: Task[];
   allMembers: Member[];
   onTaskUpdate: (task: Task) => void;
+  showProjectName?: boolean;
 }
 
-export function TaskCard({ task, allTasks, allMembers, onTaskUpdate }: TaskCardProps) {
+export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, showProjectName = true }: TaskCardProps) {
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const assignedMembers = allMembers.filter(m => task.assignedTo.includes(m.id));
   const assigner = allMembers.find(m => m.id === task.assignedBy);
+
+  const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === task.id)) : undefined;
 
   useEffect(() => {
     const checkDependency = async () => {
@@ -73,6 +77,19 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate }: TaskCardP
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <CardTitle className="text-xl font-bold font-headline">{task.name}</CardTitle>
             <div className="flex items-center gap-2 md:min-w-[120px] justify-end">
+                {project && 
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Briefcase className="h-3 w-3" />
+                          <span>{project.name}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Project</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                }
                 <StatusBadge status={task.status} />
             </div>
         </div>

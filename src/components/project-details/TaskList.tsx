@@ -6,9 +6,10 @@ interface TaskListProps {
   allTasks: Task[];
   allMembers: Member[];
   onTaskUpdate: (task: Task) => void;
+  showProjectName?: boolean;
 }
 
-export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate }: TaskListProps) {
+export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, showProjectName = true }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg bg-card">
@@ -27,6 +28,7 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate }: TaskList
           allTasks={allTasks}
           allMembers={allMembers}
           onTaskUpdate={onTaskUpdate}
+          showProjectName={showProjectName}
         />
       ))}
     </div>
