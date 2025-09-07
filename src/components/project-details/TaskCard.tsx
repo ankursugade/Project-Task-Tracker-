@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -13,9 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar, User, Users, Briefcase } from "lucide-react";
-import type { Task, TaskStatus, Member, Project } from "@/lib/types";
+import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { highlightDependentTasks } from "@/ai/flows/highlight-dependent-tasks";
 import { PROJECTS } from "@/lib/data";
 
 interface TaskCardProps {
@@ -27,42 +25,13 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, showProjectName = true }: TaskCardProps) {
-  const [isHighlighted, setIsHighlighted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
   const assignedMembers = allMembers.filter(m => task.assignedTo.includes(m.id));
   const assigner = allMembers.find(m => m.id === task.assignedBy);
 
   const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === task.id)) : undefined;
 
-  useEffect(() => {
-    const checkDependency = async () => {
-      if (task.dependencyId) {
-        const dependencyTask = allTasks.find(t => t.id === task.dependencyId);
-        if (dependencyTask && (dependencyTask.status === "OPEN" || dependencyTask.status === "WIP")) {
-          setIsLoading(true);
-          try {
-            const result = await highlightDependentTasks({
-              currentTaskStatus: task.status,
-              previousTaskStatus: dependencyTask.status,
-            });
-            setIsHighlighted(result.shouldHighlight);
-          } catch (error) {
-            console.error("AI highlighting failed:", error);
-            // Fallback logic
-            setIsHighlighted(true);
-          } finally {
-            setIsLoading(false);
-          }
-        } else {
-          setIsHighlighted(false);
-        }
-      } else {
-        setIsHighlighted(false);
-      }
-    };
-    checkDependency();
-  }, [task, allTasks]);
+  const dependencyTask = task.dependencyId ? allTasks.find(t => t.id === task.dependencyId) : undefined;
+  const isHighlighted = dependencyTask && (dependencyTask.status === "OPEN" || dependencyTask.status === "WIP");
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     onTaskUpdate({ ...task, status: newStatus });
@@ -70,7 +39,6 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, showProject
   
   return (
     <Card className={cn("transition-all duration-300", 
-        isLoading && "animate-pulse",
         isHighlighted && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800"
     )}>
       <CardHeader>
