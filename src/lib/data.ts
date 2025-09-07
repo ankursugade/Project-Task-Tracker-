@@ -15,7 +15,7 @@ function calculateEndDate(startDate: Date, durationDays: number): Date {
       daysAdded++;
     }
   }
-  return currentDate;
+  return startOfDay(currentDate);
 }
 
 
@@ -119,11 +119,15 @@ const mepTaskTemplate = [
 // =================================================================================
 // TASK GENERATION
 // =================================================================================
-const generateTasksForProject = (projectIndex: number, projectStartDate: Date): Task[] => {
+const generateTasksForProject = (projectIndex: number): Task[] => {
     const tasks: Task[] = [];
     const idMap: Record<string, string> = {};
     let taskCounter = 0;
     const statuses: TaskStatus[] = ['OPEN', 'WIP', 'CLOSED'];
+    
+    // Use a fixed start date to prevent hydration mismatches
+    const baseStartDate = new Date('2025-09-01T00:00:00Z');
+    const projectStartDate = addDays(baseStartDate, projectIndex * 7);
 
     let currentDayOffset = 0;
     let coreTaskNumber = 1;
@@ -217,15 +221,13 @@ const projectStages: ProjectStage[] = ['Pitch', 'Design', 'Construction', 'Hando
 
 export const PROJECTS: Project[] = Array.from({ length: 6 }, (_, i) => {
   const projectIndex = i + 1;
-  const projectStartDate = startOfDay(new Date());
-  projectStartDate.setDate(projectStartDate.getDate() + i * 7); // Stagger project start dates by a week
-
+  
   return {
     id: `proj-${projectIndex}`,
     name: `Project ${projectIndex}`,
     stage: projectStages[i % projectStages.length],
     projectLead: projectLeadIds[i % projectLeadIds.length],
     designCaptain: designCaptainIds[i % designCaptainIds.length],
-    tasks: generateTasksForProject(projectIndex, projectStartDate),
+    tasks: generateTasksForProject(projectIndex),
   };
 });
