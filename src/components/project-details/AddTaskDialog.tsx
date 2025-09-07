@@ -22,6 +22,7 @@ import type { Task, Member, TaskStatus } from "@/lib/types";
 import { MemberCombobox } from "../shared/MemberCombobox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Switch } from "../ui/switch";
 
 interface AddTaskDialogProps {
   isOpen: boolean;
@@ -39,9 +40,13 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
   const [dependencyId, setDependencyId] = useState<string>("");
   const [assignedBy, setAssignedBy] = useState<string>("");
+  const [isSubtask, setIsSubtask] = useState(false);
+  const [parentId, setParentId] = useState<string>("");
+
+  const coreTasks = projectTasks.filter(t => !t.parentId);
 
   const handleSubmit = () => {
-    if (!name || !startDate || !endDate || assignedTo.length === 0 || !assignedBy) {
+    if (!name || !startDate || !endDate || assignedTo.length === 0 || !assignedBy || (isSubtask && !parentId)) {
       // Add proper validation/toast later
       return;
     }
@@ -56,6 +61,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
       assignedTo,
       assignedBy,
       dependencyId: dependencyId || undefined,
+      parentId: isSubtask ? parentId : undefined,
     };
 
     onTaskAdd(newTask);
@@ -68,6 +74,8 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
     setAssignedTo([]);
     setDependencyId("");
     setAssignedBy("");
+    setIsSubtask(false);
+    setParentId("");
   };
 
   const toggleAssignee = (memberId: string) => {
@@ -84,10 +92,27 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
         <DialogHeader>
           <DialogTitle className="font-headline">Add New Task</DialogTitle>
           <DialogDescription>
-            Detail the new task for your project.
+            Detail the new task for your project. You can create a core task or a sub-task.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="is-subtask">Is this a sub-task?</Label>
+              <Switch id="is-subtask" checked={isSubtask} onCheckedChange={setIsSubtask} />
+            </div>
+            {isSubtask && (
+               <div className="space-y-2">
+                  <Label>Parent Task</Label>
+                  <Select onValueChange={setParentId}>
+                    <SelectTrigger><SelectValue placeholder="Select a parent task" /></SelectTrigger>
+                    <SelectContent>
+                      {coreTasks.map(task => (
+                        <SelectItem key={task.id} value={task.id}>{task.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+               </div>
+            )}
             <div className="space-y-2">
                 <Label htmlFor="name">Task Name</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />

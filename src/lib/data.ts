@@ -19,9 +19,16 @@ const designCaptainIds = ['mem-1', 'mem-2', 'mem-3', 'mem-4'];
 const generateTasksForProject = (projectIndex: number): Task[] => {
   const tasks: Task[] = [];
   const statuses: TaskStatus[] = ['OPEN', 'WIP', 'CLOSED'];
+  let parentId: string | undefined = undefined;
 
   for (let i = 0; i < 30; i++) {
     const taskId = `t${projectIndex}-${i + 1}`;
+    
+    // Every 5th task is a core task, the rest are its sub-tasks
+    if (i % 5 === 0) {
+        parentId = taskId;
+    }
+
     const status = statuses[i % statuses.length];
     
     const startDate = new Date();
@@ -41,18 +48,20 @@ const generateTasksForProject = (projectIndex: number): Task[] => {
 
     const assignedBy = MEMBERS[Math.floor(Math.random() * MEMBERS.length)].id;
     
-    const dependencyId = i > 0 ? `t${projectIndex}-${i}` : undefined;
+    // A sub-task can depend on the previous sub-task or the parent task
+    const dependencyId = i > 0 && i % 5 !== 1 ? `t${projectIndex}-${i}` : undefined;
 
     tasks.push({
       id: taskId,
-      name: `Task ${i + 1} for Project ${projectIndex}`,
-      description: `This is the detailed description for task ${i + 1}. It involves several steps and requires careful execution.`,
+      name: (i % 5 === 0 ? `Core Task ${Math.floor(i/5) + 1}` : `Sub-task ${i % 5}`) + ` for Project ${projectIndex}`,
+      description: `This is the detailed description for the task. It involves several steps and requires careful execution.`,
       status,
       startDate,
       endDate,
       assignedTo,
       assignedBy,
-      dependencyId: status !== 'CLOSED' ? dependencyId : undefined, // Only open/wip tasks can have a dependency for highlighting
+      dependencyId: status !== 'CLOSED' ? dependencyId : undefined,
+      parentId: (i % 5 !== 0) ? parentId : undefined,
     });
   }
   return tasks;

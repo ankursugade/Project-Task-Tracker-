@@ -16,6 +16,7 @@ export type Task = {
   assignedTo: string[]; // Array of Member IDs
   assignedBy: string; // Member ID
   dependencyId?: string; // Task ID
+  parentId?: string; // Task ID of the parent task
 };
 
 export type ProjectStage = 'Pitch' | 'Design' | 'Construction' | 'Handover';

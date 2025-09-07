@@ -40,7 +40,21 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
   };
 
   const filteredTasks = project.tasks.filter((task) => {
-    return statusFilters.size === 0 || statusFilters.has(task.status);
+    if (statusFilters.size === 0) return true;
+    // If a parent task has the filtered status, we keep it and all its children
+    if (statusFilters.has(task.status) && !task.parentId) return true;
+    
+    // If a task is a subtask, we check if its parent has the filtered status
+    if(task.parentId){
+      const parentTask = project.tasks.find(t => t.id === task.parentId);
+      if(parentTask && statusFilters.has(parentTask.status)){
+        return true;
+      }
+    }
+    // Also include subtasks if their own status matches, even if parent doesn't
+    if(statusFilters.has(task.status) && task.parentId) return true;
+    
+    return false;
   });
 
   const handleTaskAdd = (newTask: Task) => {
@@ -93,6 +107,7 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
             allTasks={project.tasks}
             allMembers={allMembers}
             onTaskUpdate={handleTaskUpdate}
+            onTaskAdd={handleTaskAdd}
             showProjectName={false}
         />
 
