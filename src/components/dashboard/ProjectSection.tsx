@@ -39,6 +39,10 @@ export function ProjectSection() {
     });
   };
 
+  const handleSummaryCardClick = (stage: ProjectStage) => {
+    setStageFilters(new Set([stage]));
+  };
+
   const filteredProjects = projects.filter((project) => {
     const stageMatch = stageFilters.size === 0 || stageFilters.has(project.stage);
     const leadMatch = !leadFilter || project.projectLead === leadFilter;
@@ -111,7 +115,7 @@ export function ProjectSection() {
         </div>
       </div>
 
-      <ProjectSummary projects={projects} />
+      <ProjectSummary projects={projects} onStageClick={handleSummaryCardClick} />
 
       <ProjectList projects={filteredProjects} />
       <AddProjectDialog
