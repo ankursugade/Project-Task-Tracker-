@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { memberStore } from "@/lib/store";
-import type { Project, ProjectStage, Member } from "@/lib/types";
+import type { Project, ProjectStage, Member, Task } from "@/lib/types";
 import { MemberCombobox } from "../shared/MemberCombobox";
 import { useToast } from "@/hooks/use-toast";
 
@@ -46,8 +46,41 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd, projects }: 
       return;
     }
     
-    // Use the passed `projects` prop which is the live state
     const projectToCopy = projects.find(p => p.id === copyFrom);
+    let copiedTasks: Task[] = [];
+
+    if (copyFrom && projectToCopy) {
+      const idMapping: Record<string, string> = {};
+      const timestamp = Date.now();
+      
+      // First pass: copy all tasks and create new IDs
+      copiedTasks = projectToCopy.tasks.map((task, index) => {
+        const oldId = task.id;
+        const newId = `task-${timestamp}-${index}`;
+        idMapping[oldId] = newId;
+
+        return {
+          ...task,
+          id: newId,
+          assignedTo: [],
+          assignedBy: "",
+          revision: 0,
+          startDate: undefined as unknown as Date, // Explicitly clear dates
+          endDate: undefined as unknown as Date,
+        };
+      });
+
+      // Second pass: update parentId and dependencyId to new IDs
+      copiedTasks = copiedTasks.map(task => {
+        const newParentId = task.parentId ? idMapping[task.parentId] : undefined;
+        const newDependencyId = task.dependencyId ? idMapping[task.dependencyId] : undefined;
+        return {
+          ...task,
+          parentId: newParentId,
+          dependencyId: newDependencyId,
+        };
+      });
+    }
 
     const newProject: Project = {
       id: `proj-${Date.now()}`,
@@ -55,8 +88,9 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd, projects }: 
       stage,
       projectLead,
       designCaptain,
-      tasks: copyFrom ? projectToCopy?.tasks.map(t => ({...t, id: `task-${Date.now()}-${t.id}`, assignedTo: []})) || [] : [],
+      tasks: copiedTasks,
     };
+
     onProjectAdd(newProject);
     setIsOpen(false);
     // Reset form
