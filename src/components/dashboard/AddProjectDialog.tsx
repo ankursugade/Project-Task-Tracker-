@@ -105,7 +105,7 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd, projects }: 
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Add New Project</DialogTitle>
+          <DialogTitle>Add New Project</DialogTitle>
           <DialogDescription>
             Fill in the details for your new project. You can also copy tasks from an existing project.
           </DialogDescription>

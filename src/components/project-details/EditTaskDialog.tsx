@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -104,7 +105,7 @@ export function EditTaskDialog({ isOpen, setIsOpen, onTaskUpdate, allMembers, pr
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Edit Task</DialogTitle>
+          <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
             Update the details for this task.
           </DialogDescription>

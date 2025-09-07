@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -294,7 +295,7 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
               <AccordionTrigger className="p-4 hover:no-underline">
                  <div className="flex items-center justify-between w-full">
                     <Link href={`/projects/${project.id}`} className="hover:underline">
-                      <h3 className="text-xl font-bold font-headline">{project.name}</h3>
+                      <h3 className="text-xl font-bold">{project.name}</h3>
                     </Link>
                     <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                  </div>

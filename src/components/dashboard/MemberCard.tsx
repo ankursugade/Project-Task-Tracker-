@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import {
   Card,
@@ -25,7 +26,7 @@ export function MemberCard({ member, openTasks, dueTodayTasks }: MemberCardProps
             <AvatarFallback>{member.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
           </Avatar>
           <div>
-            <CardTitle className="font-headline">{member.name}</CardTitle>
+            <CardTitle className="font-bold">{member.name}</CardTitle>
             <CardDescription>Team Member</CardDescription>
           </div>
         </CardHeader>

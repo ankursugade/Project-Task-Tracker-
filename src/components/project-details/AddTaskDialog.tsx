@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -127,7 +128,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Add New Task</DialogTitle>
+          <DialogTitle>Add New Task</DialogTitle>
           <DialogDescription>
             Detail the new task for your project. You can create a core task or a sub-task.
           </DialogDescription>

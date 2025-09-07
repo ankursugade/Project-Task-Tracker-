@@ -34,7 +34,7 @@ export function ProjectDetailHeader({ project, allMembers, onExportPDF, isPdfLoa
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold font-headline">{project.name}</h1>
+            <h1 className="text-3xl font-bold">{project.name}</h1>
              <Select onValueChange={onStageChange} value={project.stage}>
                 <SelectTrigger className="w-auto border-none shadow-none bg-transparent p-0 h-auto focus:ring-0 focus:ring-offset-0">
                   <SelectValue asChild>

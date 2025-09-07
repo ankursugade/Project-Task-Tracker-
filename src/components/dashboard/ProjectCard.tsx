@@ -36,7 +36,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <Link href={`/projects/${project.id}`} className="flex flex-col flex-grow">
         <CardHeader>
           <div className="flex items-start justify-between">
-            <CardTitle className="font-headline group-hover:text-primary">
+            <CardTitle className="font-bold group-hover:text-primary">
               {name}
             </CardTitle>
             <StatusBadge status={stage} />

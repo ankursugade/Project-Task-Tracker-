@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,7 +44,7 @@ export function AddMemberDialog({ isOpen, setIsOpen, onMemberAdd }: AddMemberDia
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Add New Member</DialogTitle>
+          <DialogTitle>Add New Member</DialogTitle>
           <DialogDescription>
             Enter the name of the new team member. An avatar will be generated automatically.
           </DialogDescription>

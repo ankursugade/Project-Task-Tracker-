@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,7 +23,7 @@ export function MemberSection() {
   return (
     <section>
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold tracking-tight font-headline">
+        <h2 className="text-2xl font-bold tracking-tight">
           Team Overview
         </h2>
         <div className="flex items-center gap-2">

@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import {
   Card,
@@ -23,7 +24,7 @@ export function MemberListItem({ member, openTasks, dueTodayTasks }: MemberListI
                     <AvatarFallback>{member.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                 </Avatar>
                 <div>
-                    <h3 className="font-bold font-headline">{member.name}</h3>
+                    <h3 className="font-bold">{member.name}</h3>
                     <p className="text-sm text-muted-foreground">Team Member</p>
                 </div>
             </div>

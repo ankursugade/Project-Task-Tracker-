@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import {
   Card,
@@ -29,7 +30,7 @@ export function ProjectListItem({ project }: ProjectListItemProps) {
         <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 items-center gap-4">
           <div className="md:col-span-2 flex items-center gap-4">
             <div>
-              <h3 className="font-bold font-headline text-lg">{name}</h3>
+              <h3 className="font-bold text-lg">{name}</h3>
               <p className="text-sm text-muted-foreground">{tasks.length} tasks</p>
             </div>
           </div>

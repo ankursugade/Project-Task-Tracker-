@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState } from 'react';
@@ -95,7 +94,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
     )}>
        <CardHeader>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <CardTitle className="text-xl font-bold font-headline pr-10">{task.name}</CardTitle>
+              <CardTitle className="text-xl font-bold pr-10">{task.name}</CardTitle>
               <div className="flex items-center gap-2 md:min-w-[120px] justify-end">
                   {project && 
                     <TooltipProvider>

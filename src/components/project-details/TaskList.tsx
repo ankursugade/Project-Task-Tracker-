@@ -81,7 +81,7 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
                  <AccordionTrigger className="p-0 hover:no-underline w-full flex">
                      <CardHeader className="w-full">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                           <CardTitle className="text-xl font-bold font-headline pr-10 text-left">{coreTask.name}</CardTitle>
+                           <CardTitle className="text-xl font-bold pr-10 text-left">{coreTask.name}</CardTitle>
                            <div className="flex items-center gap-2 md:min-w-[120px] justify-end">
                                {project && 
                                  <TooltipProvider>

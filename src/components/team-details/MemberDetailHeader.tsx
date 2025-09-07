@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ export function MemberDetailHeader({ member }: MemberDetailHeaderProps) {
             <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
         </Avatar>
         <div>
-            <h1 className="text-3xl font-bold font-headline">{member.name}</h1>
+            <h1 className="text-3xl font-bold">{member.name}</h1>
             <p className="text-muted-foreground">Viewing all tasks assigned to {member.name}.</p>
         </div>
       </div>
