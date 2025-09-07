@@ -77,6 +77,20 @@ export function MemberTaskSection({ tasksByProject: initialTasksByProject, allMe
       if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
           finalUpdatedTask.revision = (originalTask.revision || 0) + 1;
       }
+      
+      // New Rule: Prevent closing a core task if sub-tasks are not closed
+      if (finalUpdatedTask.status === 'CLOSED' && !finalUpdatedTask.parentId) {
+          const subTasks = project.tasks.filter(t => t.parentId === finalUpdatedTask.id);
+          const openSubTasks = subTasks.filter(st => st.status !== 'CLOSED');
+          if (openSubTasks.length > 0) {
+               toast({
+                  title: "Action Blocked",
+                  description: `Cannot close "${finalUpdatedTask.name}" because ${openSubTasks.length} sub-task(s) are not yet closed.`,
+                  variant: "destructive",
+              });
+              return; // Abort update
+          }
+      }
 
       if (finalUpdatedTask.status === 'CLOSED' && finalUpdatedTask.dependencyId) {
           const dependency = allTasks.find(t => t.id === finalUpdatedTask.dependencyId);

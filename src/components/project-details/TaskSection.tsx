@@ -102,7 +102,6 @@ export function TaskSection({ project, setProject, allMembers }: TaskSectionProp
   };
 
   const handleTaskUpdate = (updatedTask: Task, changedById: string) => {
-    let updateAborted = false;
     setProject(prevProject => {
         if (!prevProject) return undefined;
 
@@ -119,6 +118,21 @@ export function TaskSection({ project, setProject, allMembers }: TaskSectionProp
         if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
             finalUpdatedTask.revision = (originalTask.revision || 0) + 1;
         }
+        
+        // New Rule: Prevent closing a core task if sub-tasks are not closed
+        if (finalUpdatedTask.status === 'CLOSED' && !finalUpdatedTask.parentId) {
+            const subTasks = newTasks.filter(t => t.parentId === finalUpdatedTask.id);
+            const openSubTasks = subTasks.filter(st => st.status !== 'CLOSED');
+            if (openSubTasks.length > 0) {
+                 toast({
+                    title: "Action Blocked",
+                    description: `Cannot close "${finalUpdatedTask.name}" because ${openSubTasks.length} sub-task(s) are not yet closed.`,
+                    variant: "destructive",
+                });
+                return prevProject; // Abort update
+            }
+        }
+
 
         // Rule 1: Prevent closing a blocked task
         if (finalUpdatedTask.status === 'CLOSED' && finalUpdatedTask.dependencyId) {
@@ -129,7 +143,6 @@ export function TaskSection({ project, setProject, allMembers }: TaskSectionProp
                     description: `Cannot close "${finalUpdatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
                     variant: "destructive",
                 });
-                updateAborted = true;
                 return prevProject; // Abort update
             }
         }
