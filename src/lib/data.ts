@@ -20,13 +20,19 @@ const generateTasksForProject = (projectIndex: number): Task[] => {
   const tasks: Task[] = [];
   const statuses: TaskStatus[] = ['OPEN', 'WIP', 'CLOSED'];
   let parentId: string | undefined = undefined;
+  let coreTaskCounter = 0;
 
   for (let i = 0; i < 30; i++) {
     const taskId = `t${projectIndex}-${i + 1}`;
+    let taskName = "";
     
     // Every 5th task is a core task, the rest are its sub-tasks
     if (i % 5 === 0) {
         parentId = taskId;
+        coreTaskCounter++;
+        taskName = `Core Task ${coreTaskCounter}`;
+    } else {
+        taskName = `Sub-task ${coreTaskCounter}.${i % 5}`;
     }
 
     const status = statuses[i % statuses.length];
@@ -53,8 +59,8 @@ const generateTasksForProject = (projectIndex: number): Task[] => {
 
     tasks.push({
       id: taskId,
-      name: (i % 5 === 0 ? `Core Task ${Math.floor(i/5) + 1}` : `Sub-task ${i % 5}`) + ` for Project ${projectIndex}`,
-      description: `This is the detailed description for the task. It involves several steps and requires careful execution.`,
+      name: taskName,
+      description: `This is the detailed description for ${taskName}. It involves several steps and requires careful execution.`,
       status,
       startDate,
       endDate,
