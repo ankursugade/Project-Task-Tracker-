@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AccordionTrigger } from '@/components/ui/accordion';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "../shared/StatusBadge";
@@ -18,9 +17,9 @@ import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PROJECTS } from "@/lib/data";
 import { Button } from "../ui/button";
-import { MemberCombobox } from '../shared/MemberCombobox';
-import { Label } from '../ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Label } from '../ui/label';
+import { MemberCombobox } from '../shared/MemberCombobox';
 
 interface TaskCardProps {
   task: Task;
@@ -57,16 +56,12 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
     onTaskUpdate({ ...task, status: newStatus }, changedBy);
   };
   
-  const cardContent = (
-    <div
-      onClick={(e) => {
-        // Prevent accordion from toggling when clicking on interactive elements
-        if (e.target instanceof HTMLElement && e.target.closest('[data-interactive="true"]')) {
-          e.stopPropagation();
-        }
-      }}
-    >
-        <CardHeader>
+  return (
+     <Card className={cn("transition-all duration-300 w-full group", 
+        isBlocked && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800",
+        isBlocking && "bg-purple-50 border-purple-400 ring-2 ring-purple-200 dark:bg-purple-950 dark:border-purple-700 dark:ring-purple-800"
+    )}>
+       <CardHeader>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <CardTitle className="text-xl font-bold font-headline pr-10">{task.name}</CardTitle>
               <div className="flex items-center gap-2 md:min-w-[120px] justify-end">
@@ -84,7 +79,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                     </TooltipProvider>
                   }
                   <StatusBadge status={task.status} />
-                   {isAccordionTrigger && <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />}
+                  {isAccordionTrigger && <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />}
               </div>
           </div>
           <CardDescription>{task.description}</CardDescription>
@@ -155,7 +150,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                   ))}
                   </div>
               </div>
-              <div data-interactive="true" className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
                 {!isSubTask && (
                   <TooltipProvider>
                       <Tooltip>
@@ -200,21 +195,6 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
               </div>
           </div>
         </CardContent>
-    </div>
-  );
-
-  return (
-     <Card className={cn("transition-all duration-300 w-full group", 
-        isBlocked && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800",
-        isBlocking && "bg-purple-50 border-purple-400 ring-2 ring-purple-200 dark:bg-purple-950 dark:border-purple-700 dark:ring-purple-800"
-    )}>
-        {isAccordionTrigger ? (
-            <AccordionTrigger className="p-0 hover:no-underline w-full flex" disabled={!isAccordionTrigger}>
-                {cardContent}
-            </AccordionTrigger>
-        ) : (
-            cardContent
-        )}
     </Card>
   );
 }

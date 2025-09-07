@@ -1,10 +1,18 @@
 import type { Task, Member } from "@/lib/types";
 import { TaskCard } from "./TaskCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ChevronsUpDown } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { StatusBadge } from "../shared/StatusBadge";
-import { Button } from "../ui/button";
+import { Briefcase, ChevronsUpDown } from "lucide-react";
+import { PROJECTS } from "@/lib/data";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
+
 
 interface TaskListProps {
   tasks: Task[];
@@ -42,41 +50,84 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
       {coreTasks.map((coreTask) => {
         const subTasks = subTasksByParentId[coreTask.id] || [];
         const hasSubtasks = subTasks.length > 0;
+        const project = showProjectName ? PROJECTS.find(p => p.tasks.some(t => t.id === coreTask.id)) : undefined;
+
+        if (!hasSubtasks) {
+             return (
+                 <TaskCard
+                    key={coreTask.id}
+                    task={coreTask}
+                    allTasks={allTasks}
+                    allMembers={allMembers}
+                    onTaskUpdate={onTaskUpdate}
+                    onSubtaskAdd={onSubtaskAdd}
+                    onEdit={onEdit}
+                    showProjectName={showProjectName}
+                    isSubTask={false}
+                 />
+            )
+        }
 
         return (
             <AccordionItem value={coreTask.id} key={coreTask.id} className="border-none">
-                 <div className="relative">
-                     <TaskCard
-                        task={coreTask}
-                        allTasks={allTasks}
-                        allMembers={allMembers}
-                        onTaskUpdate={onTaskUpdate}
-                        onSubtaskAdd={onSubtaskAdd}
-                        onEdit={onEdit}
-                        showProjectName={showProjectName}
-                        isSubTask={false}
-                        isAccordionTrigger={hasSubtasks}
-                     />
-                 </div>
-              {hasSubtasks && (
-                <AccordionContent className="pt-0">
-                  <div className="pl-8 mt-2 space-y-2 border-l-2 border-dashed ml-7">
-                    {subTasks.map(subTask => (
-                      <TaskCard
-                        key={subTask.id}
-                        task={subTask}
-                        allTasks={allTasks}
-                        allMembers={allMembers}
-                        onTaskUpdate={onTaskUpdate}
-                        onSubtaskAdd={onSubtaskAdd}
-                        onEdit={onEdit}
-                        showProjectName={showProjectName}
-                        isSubTask={true}
-                      />
-                    ))}
+                 <AccordionTrigger className="p-0 hover:no-underline w-full flex rounded-lg data-[state=open]:rounded-b-none [&[data-state=open]>div]:rounded-b-none">
+                     <CardHeader className="w-full">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                           <CardTitle className="text-xl font-bold font-headline pr-10">{coreTask.name}</CardTitle>
+                           <div className="flex items-center gap-2 md:min-w-[120px] justify-end">
+                               {project && 
+                                 <TooltipProvider>
+                                   <Tooltip>
+                                     <TooltipTrigger>
+                                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                         <Briefcase className="h-3 w-3" />
+                                         <span>{project.name}</span>
+                                       </div>
+                                     </TooltipTrigger>
+                                     <TooltipContent>Project</TooltipContent>
+                                   </Tooltip>
+                                 </TooltipProvider>
+                               }
+                               <StatusBadge status={coreTask.status} />
+                               <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                           </div>
+                        </div>
+                        <CardDescription>{coreTask.description}</CardDescription>
+                     </CardHeader>
+                 </AccordionTrigger>
+              <AccordionContent className="p-0 border-t-0 rounded-b-lg">
+                  <div className="pt-0">
+                     <div className="border-t">
+                        <TaskCard
+                           task={coreTask}
+                           allTasks={allTasks}
+                           allMembers={allMembers}
+                           onTaskUpdate={onTaskUpdate}
+                           onSubtaskAdd={onSubtaskAdd}
+                           onEdit={onEdit}
+                           showProjectName={showProjectName}
+                           isSubTask={false}
+                        />
+                     </div>
+                     {hasSubtasks && (
+                       <div className="pl-8 mt-2 space-y-2 border-l-2 border-dashed ml-7 pb-4">
+                         {subTasks.map(subTask => (
+                           <TaskCard
+                             key={subTask.id}
+                             task={subTask}
+                             allTasks={allTasks}
+                             allMembers={allMembers}
+                             onTaskUpdate={onTaskUpdate}
+                             onSubtaskAdd={onSubtaskAdd}
+                             onEdit={onEdit}
+                             showProjectName={showProjectName}
+                             isSubTask={true}
+                           />
+                         ))}
+                       </div>
+                     )}
                   </div>
-                </AccordionContent>
-              )}
+              </AccordionContent>
             </AccordionItem>
         )
       })}
