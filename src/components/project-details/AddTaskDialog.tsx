@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, calculateEndDate } from "@/lib/utils";
 import type { Task, Member, TaskStatus } from "@/lib/types";
 import { MemberCombobox } from "../shared/MemberCombobox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Switch } from "../ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { TaskCombobox } from "../shared/TaskCombobox";
+import { Checkbox } from "../ui/checkbox";
 
 interface AddTaskDialogProps {
   isOpen: boolean;
@@ -40,6 +41,8 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [duration, setDuration] = useState<number | undefined>();
+  const [weekdaysOnly, setWeekdaysOnly] = useState(true);
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
   const [dependencyId, setDependencyId] = useState<string>("");
   const [assignedBy, setAssignedBy] = useState<string>("");
@@ -54,6 +57,13 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
     }
   }, [initialParentId]);
 
+  useEffect(() => {
+    if (startDate && duration && duration > 0) {
+      const newEndDate = calculateEndDate(startDate, duration, weekdaysOnly);
+      setEndDate(newEndDate);
+    }
+  }, [startDate, duration, weekdaysOnly]);
+
   const coreTasks = projectTasks.filter(t => !t.parentId);
 
   const resetForm = () => {
@@ -61,6 +71,8 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
     setDescription("");
     setStartDate(undefined);
     setEndDate(undefined);
+    setDuration(undefined);
+    setWeekdaysOnly(true);
     setAssignedTo([]);
     setDependencyId("");
     setAssignedBy("");
@@ -155,7 +167,12 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
                                 {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus /></PopoverContent>
+                        <PopoverContent className="w-auto p-0">
+                           <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+                           <div className="p-2 border-t">
+                              <Button size="sm" className="w-full" onClick={() => setStartDate(new Date())}>Today</Button>
+                           </div>
+                        </PopoverContent>
                     </Popover>
                 </div>
                 <div className="space-y-2">
@@ -167,9 +184,37 @@ export function AddTaskDialog({ isOpen, setIsOpen, onTaskAdd, allMembers, projec
                                 {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus /></PopoverContent>
+                        <PopoverContent className="w-auto p-0">
+                           <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
+                           <div className="p-2 border-t">
+                             <Button size="sm" className="w-full" onClick={() => setEndDate(new Date())}>Today</Button>
+                           </div>
+                        </PopoverContent>
                     </Popover>
                 </div>
+            </div>
+             <div className="space-y-2 p-3 rounded-md border bg-muted/50">
+                <div className="grid grid-cols-2 gap-4 items-center">
+                    <div className="space-y-2">
+                        <Label htmlFor="duration">Working Days</Label>
+                        <Input 
+                            id="duration" 
+                            type="number" 
+                            value={duration || ""}
+                            onChange={(e) => setDuration(parseInt(e.target.value, 10) || undefined)}
+                            placeholder="e.g. 5"
+                        />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-6">
+                        <Checkbox 
+                            id="weekdays-only" 
+                            checked={weekdaysOnly} 
+                            onCheckedChange={(checked) => setWeekdaysOnly(Boolean(checked))}
+                        />
+                        <Label htmlFor="weekdays-only" className="text-sm font-normal">Weekdays only</Label>
+                    </div>
+                </div>
+                <p className="text-xs text-muted-foreground">Set a start date and working days to auto-calculate the end date.</p>
             </div>
             <div className="space-y-2">
               <Label>Assigned By</Label>
