@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2 } from "lucide-react";
+import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2, GitBranch } from "lucide-react";
 import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PROJECTS } from "@/lib/data";
@@ -39,7 +39,9 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
   const dependencyTask = task.dependencyId ? allTasks.find(t => t.id === task.dependencyId) : undefined;
   const isBlocked = dependencyTask && (dependencyTask.status === "OPEN" || dependencyTask.status === "WIP");
 
-  const isBlocking = allTasks.some(t => t.dependencyId === task.id && t.status !== 'CLOSED');
+  const dependentTasks = allTasks.filter(t => t.dependencyId === task.id);
+  const isBlocking = dependentTasks.length > 0 && task.status !== 'CLOSED';
+
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     onTaskUpdate({ ...task, status: newStatus });
@@ -106,6 +108,19 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
               </TooltipProvider>
             )}
         </div>
+        
+        {isBlocking && (
+            <div className="text-xs text-purple-800 dark:text-purple-300">
+                <div className="flex items-center gap-2 font-semibold">
+                    <GitBranch className="h-3 w-3" />
+                    <span>Blocking:</span>
+                </div>
+                <ul className="pl-5 list-disc list-inside">
+                    {dependentTasks.map(depTask => <li key={depTask.id}>{depTask.name}</li>)}
+                </ul>
+            </div>
+        )}
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground"/>
