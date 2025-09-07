@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2, GitBranch, ChevronsUpDown, GitPullRequest } from "lucide-react";
+import { Calendar, User, Users, Briefcase, GitCommitHorizontal, MessageSquarePlus, Pencil, Link2, GitBranch, ChevronsUpDown, GitPullRequest, UserPlus } from "lucide-react";
 import type { Task, TaskStatus, Member } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PROJECTS } from "@/lib/data";
@@ -24,6 +24,7 @@ import { Label } from '../ui/label';
 import { MemberCombobox } from '../shared/MemberCombobox';
 import { Badge } from '../ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '../ui/command';
 
 interface TaskCardProps {
   task: Task;
@@ -41,6 +42,7 @@ interface TaskCardProps {
 
 export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isSubTask = false, isAccordionTrigger = false, hideDescription = false, overrideAssignedMembers }: TaskCardProps) {
   const [isMemberPopoverOpen, setMemberPopoverOpen] = useState(false);
+  const [showAllMembers, setShowAllMembers] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | null>(null);
   const { toast } = useToast();
 
@@ -63,12 +65,20 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
       setMemberPopoverOpen(true);
     }
   }
+  
+  const handlePopoverOpenChange = (open: boolean) => {
+    setMemberPopoverOpen(open);
+    if (!open) {
+      // Reset when popover closes
+      setShowAllMembers(false);
+      setSelectedStatus(null);
+    }
+  }
 
   const handleMemberSelect = (memberId: string) => {
     if (selectedStatus && memberId) {
       onTaskUpdate({ ...task, status: selectedStatus }, memberId);
-      setMemberPopoverOpen(false);
-      setSelectedStatus(null);
+      handlePopoverOpenChange(false);
     } else {
         toast({
             title: "Selection required",
@@ -77,6 +87,8 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
         });
     }
   }
+
+  const membersForPopover = showAllMembers ? allMembers : assignedMembers;
 
   return (
      <Card className={cn("transition-all duration-300 w-full group", 
@@ -201,29 +213,51 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                     </Tooltip>
                   </TooltipProvider>
                   <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                      <Popover open={isMemberPopoverOpen} onOpenChange={setMemberPopoverOpen}>
-                          <Select onValueChange={handleStatusSelect} value={task.status}>
-                            <PopoverTrigger asChild>
+                      <Popover open={isMemberPopoverOpen} onOpenChange={handlePopoverOpenChange}>
+                          <PopoverTrigger asChild>
+                            <Select onValueChange={handleStatusSelect} value={task.status}>
                                 <SelectTrigger className="w-full md:w-[150px]">
                                     <SelectValue placeholder="Change status" />
                                 </SelectTrigger>
-                            </PopoverTrigger>
-                            <SelectContent>
-                                <SelectItem value="OPEN">Open</SelectItem>
-                                <SelectItem value="WIP">In Progress</SelectItem>
-                                <SelectItem value="CLOSED">Closed</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        <PopoverContent className="w-auto p-0" align="end">
-                            <div className="p-2 space-y-2">
-                                <Label className="text-xs px-1 font-semibold">Who is changing the status?</Label>
-                                <MemberCombobox 
-                                    members={allMembers} 
-                                    selectedMember={""} 
-                                    setSelectedMember={handleMemberSelect} 
-                                    placeholder="Select member..."
-                                />
-                            </div>
+                                <SelectContent>
+                                    <SelectItem value="OPEN">Open</SelectItem>
+                                    <SelectItem value="WIP">In Progress</SelectItem>
+                                    <SelectItem value="CLOSED">Closed</SelectItem>
+                                </SelectContent>
+                            </Select>
+                          </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="end">
+                           <Command>
+                            <CommandInput placeholder="Search member..."/>
+                            <CommandList>
+                               <CommandEmpty>No members found.</CommandEmpty>
+                               <CommandGroup heading="Assigned Members">
+                                 {assignedMembers.map((member) => (
+                                    <CommandItem key={member.id} value={member.name} onSelect={() => handleMemberSelect(member.id)}>
+                                        <Avatar className="h-6 w-6 mr-2"><AvatarImage src={member.avatarUrl} /><AvatarFallback>{member.name[0]}</AvatarFallback></Avatar>
+                                        {member.name}
+                                    </CommandItem>
+                                  ))}
+                               </CommandGroup>
+                               <CommandSeparator />
+                                <CommandGroup>
+                                    <CommandItem onSelect={() => setShowAllMembers(true)}>
+                                        <UserPlus className="mr-2 h-4 w-4" />
+                                        <span>Other member...</span>
+                                    </CommandItem>
+                                </CommandGroup>
+                                {showAllMembers && (
+                                     <CommandGroup heading="All Members">
+                                        {allMembers.map((member) => (
+                                            <CommandItem key={member.id} value={member.name} onSelect={() => handleMemberSelect(member.id)}>
+                                                <Avatar className="h-6 w-6 mr-2"><AvatarImage src={member.avatarUrl} /><AvatarFallback>{member.name[0]}</AvatarFallback></Avatar>
+                                                {member.name}
+                                            </CommandItem>
+                                        ))}
+                                     </CommandGroup>
+                                )}
+                            </CommandList>
+                           </Command>
                         </PopoverContent>
                       </Popover>
                   </div>
