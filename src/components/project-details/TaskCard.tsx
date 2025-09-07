@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -31,9 +32,10 @@ interface TaskCardProps {
   showProjectName?: boolean;
   isSubTask?: boolean;
   isAccordionTrigger?: boolean;
+  hideDescription?: boolean;
 }
 
-export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isSubTask = false, isAccordionTrigger = false }: TaskCardProps) {
+export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isSubTask = false, isAccordionTrigger = false, hideDescription = false }: TaskCardProps) {
   const [changedBy, setChangedBy] = useState("");
   const assignedMembers = allMembers.filter(m => task.assignedTo.includes(m.id));
   const assigner = allMembers.find(m => m.id === task.assignedBy);
@@ -82,7 +84,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                   {isAccordionTrigger && <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />}
               </div>
           </div>
-          <CardDescription>{task.description}</CardDescription>
+          {!hideDescription && <CardDescription>{task.description}</CardDescription>}
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">

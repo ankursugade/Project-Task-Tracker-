@@ -1,3 +1,4 @@
+
 import type { Task, Member } from "@/lib/types";
 import { TaskCard } from "./TaskCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -109,6 +110,7 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
                            onEdit={onEdit}
                            showProjectName={showProjectName}
                            isSubTask={false}
+                           hideDescription={true}
                         />
                      </div>
                      {hasSubtasks && (
