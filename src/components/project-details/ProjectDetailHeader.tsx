@@ -18,9 +18,9 @@ export function ProjectDetailHeader({ project }: ProjectDetailHeaderProps) {
   return (
     <div className="mb-8">
       <Button asChild variant="ghost" className="mb-4 -ml-4">
-        <Link href="/">
+        <Link href="/dashboard/projects">
           <ChevronLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
+          Back to Projects
         </Link>
       </Button>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
