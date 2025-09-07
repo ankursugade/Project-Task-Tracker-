@@ -1,17 +1,21 @@
+
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Project } from "@/lib/types";
 import { MEMBERS } from "@/lib/data";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
+import { Separator } from "../ui/separator";
 
 interface ProjectDetailHeaderProps {
   project: Project;
+  onExportPDF: () => void;
+  isPdfLoading: boolean;
 }
 
-export function ProjectDetailHeader({ project }: ProjectDetailHeaderProps) {
+export function ProjectDetailHeader({ project, onExportPDF, isPdfLoading }: ProjectDetailHeaderProps) {
   const lead = MEMBERS.find(m => m.id === project.projectLead);
   const captain = MEMBERS.find(m => m.id === project.designCaptain);
 
@@ -23,13 +27,13 @@ export function ProjectDetailHeader({ project }: ProjectDetailHeaderProps) {
           Back to Projects
         </Link>
       </Button>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-4">
             <h1 className="text-3xl font-bold font-headline">{project.name}</h1>
             <StatusBadge status={project.stage} />
           </div>
-          <p className="text-muted-foreground">Manage and track all tasks for this project.</p>
+          <p className="text-muted-foreground mt-1">Manage and track all tasks for this project.</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex -space-x-2">
@@ -62,6 +66,20 @@ export function ProjectDetailHeader({ project }: ProjectDetailHeaderProps) {
           </div>
         </div>
       </div>
+      <Separator className="my-6" />
+        <Button variant="outline" onClick={onExportPDF} disabled={isPdfLoading} className="h-auto py-2">
+            <div className="flex items-center gap-2">
+                {isPdfLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                    <FileText className="h-4 w-4" />
+                )}
+                <div className="flex flex-col items-start text-left">
+                    <span>Export Project Summary</span>
+                    <span className="text-xs text-muted-foreground -mt-0.5">PDF Copy</span>
+                </div>
+            </div>
+        </Button>
     </div>
   );
 }

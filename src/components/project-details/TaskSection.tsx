@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlusCircle, Filter, FileDown, Loader2, FileText } from "lucide-react";
+import { PlusCircle, Filter, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Project, Task, Member, TaskStatus } from "@/lib/types";
 import { TaskList } from "./TaskList";
@@ -19,27 +19,22 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { DependencyAlert } from "./DependencyAlert";
 import { logStore } from "@/lib/log-store";
-import { summarizeProject } from "@/ai/flows/summarizeProjectFlow";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { ProjectReport } from "./ProjectReport";
-import { createRoot } from "react-dom/client";
+
 
 interface TaskSectionProps {
-  initialProject: Project;
+  project: Project;
+  setProject: React.Dispatch<React.SetStateAction<Project | undefined>>;
   allMembers: Member[];
 }
 
 const taskStatuses: TaskStatus[] = ['OPEN', 'WIP', 'CLOSED'];
 
-export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
-  const [project, setProject] = useState(initialProject);
+export function TaskSection({ project, setProject, allMembers }: TaskSectionProps) {
   const [isAddTaskOpen, setAddTaskOpen] = useState(false);
   const [isEditTaskOpen, setEditTaskOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const [parentForNewSubtask, setParentForNewSubtask] = useState<string | undefined>(undefined);
   const [statusFilters, setStatusFilters] = useState<Set<TaskStatus>>(new Set());
-  const [isPdfLoading, setIsPdfLoading] = useState(false);
   const { toast } = useToast();
 
 
@@ -83,104 +78,108 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
       finalTask.name = `${coreTasks.length + 1}. ${newTask.name}`;
     }
 
-    setProject((prev) => ({
+    setProject((prev) => prev ? ({
       ...prev,
       tasks: [finalTask, ...prev.tasks],
-    }));
+    }) : undefined);
     toast({ title: "Task Created", description: `Task "${finalTask.name}" has been successfully added.` });
   };
 
   const handleTaskUpdate = (updatedTask: Task, changedById: string) => {
-    let newTasks = [...project.tasks];
-    const originalTask = newTasks.find(t => t.id === updatedTask.id);
+    setProject(prevProject => {
+        if (!prevProject) return undefined;
 
-    if (!originalTask) return;
-    
-    let finalUpdatedTask = { ...updatedTask };
+        let newTasks = [...prevProject.tasks];
+        const originalTask = newTasks.find(t => t.id === updatedTask.id);
 
-    const statusChanged = originalTask.status !== finalUpdatedTask.status;
+        if (!originalTask) return prevProject;
+        
+        let finalUpdatedTask = { ...updatedTask };
 
-    // Increment revision if a closed task is reopened
-    if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
-        finalUpdatedTask.revision = (originalTask.revision || 0) + 1;
-    }
+        const statusChanged = originalTask.status !== finalUpdatedTask.status;
 
-    // Rule 1: Prevent closing a blocked task
-    if (finalUpdatedTask.status === 'CLOSED' && finalUpdatedTask.dependencyId) {
-        const dependency = newTasks.find(t => t.id === finalUpdatedTask.dependencyId);
-        if (dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP')) {
-            toast({
-                title: "Action Blocked",
-                description: `Cannot close "${finalUpdatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
-                variant: "destructive",
-            });
-            return; // Abort update
+        // Increment revision if a closed task is reopened
+        if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
+            finalUpdatedTask.revision = (originalTask.revision || 0) + 1;
         }
-    }
-    
-    // Update the task itself
-    newTasks = newTasks.map(t => t.id === finalUpdatedTask.id ? finalUpdatedTask : t);
 
-    // Rule 2: If a core task is being closed, close all its sub-tasks
-    const isCoreTask = !finalUpdatedTask.parentId;
-    if (isCoreTask && finalUpdatedTask.status === 'CLOSED' && originalTask.status !== 'CLOSED') {
-        newTasks = newTasks.map(t => {
-            if (t.parentId === finalUpdatedTask.id && t.status !== 'CLOSED') {
-                logStore.add({
-                    taskId: t.id,
-                    taskName: t.name,
-                    projectId: project.id,
-                    projectName: project.name,
-                    previousStatus: t.status,
-                    newStatus: 'CLOSED',
-                    changedBy: changedById,
+        // Rule 1: Prevent closing a blocked task
+        if (finalUpdatedTask.status === 'CLOSED' && finalUpdatedTask.dependencyId) {
+            const dependency = newTasks.find(t => t.id === finalUpdatedTask.dependencyId);
+            if (dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP')) {
+                toast({
+                    title: "Action Blocked",
+                    description: `Cannot close "${finalUpdatedTask.name}" because it depends on "${dependency.name}", which is not closed.`,
+                    variant: "destructive",
                 });
-                return { ...t, status: 'CLOSED' as TaskStatus }; // Close sub-tasks
+                return prevProject; // Abort update
             }
-            return t;
-        });
-    }
+        }
+        
+        // Update the task itself
+        newTasks = newTasks.map(t => t.id === finalUpdatedTask.id ? finalUpdatedTask : t);
 
-    // Rule 3: If a dependency is reopened, reopen dependent tasks
-    if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
-        const dependentTasks = newTasks.filter(t => t.dependencyId === finalUpdatedTask.id);
-        dependentTasks.forEach(depTask => {
-            if (depTask.status === 'CLOSED') {
-                newTasks = newTasks.map(t => {
-                    if (t.id === depTask.id) {
-                        logStore.add({
-                            taskId: t.id,
-                            taskName: t.name,
-                            projectId: project.id,
-                            projectName: project.name,
-                            previousStatus: 'CLOSED',
-                            newStatus: 'OPEN',
-                            changedBy: changedById,
-                        });
-                        const newRevision = (t.revision || 0) + 1;
-                        return { ...t, status: 'OPEN' as TaskStatus, revision: newRevision };
-                    }
-                    return t;
-                });
-            }
-        });
-    }
+        // Rule 2: If a core task is being closed, close all its sub-tasks
+        const isCoreTask = !finalUpdatedTask.parentId;
+        if (isCoreTask && finalUpdatedTask.status === 'CLOSED' && originalTask.status !== 'CLOSED') {
+            newTasks = newTasks.map(t => {
+                if (t.parentId === finalUpdatedTask.id && t.status !== 'CLOSED') {
+                    logStore.add({
+                        taskId: t.id,
+                        taskName: t.name,
+                        projectId: prevProject.id,
+                        projectName: prevProject.name,
+                        previousStatus: t.status,
+                        newStatus: 'CLOSED',
+                        changedBy: changedById,
+                    });
+                    return { ...t, status: 'CLOSED' as TaskStatus }; // Close sub-tasks
+                }
+                return t;
+            });
+        }
 
-    if (statusChanged) {
-        logStore.add({
-            taskId: originalTask.id,
-            taskName: originalTask.name,
-            projectId: project.id,
-            projectName: project.name,
-            previousStatus: originalTask.status,
-            newStatus: finalUpdatedTask.status,
-            changedBy: changedById,
-        });
-    }
+        // Rule 3: If a dependency is reopened, reopen dependent tasks
+        if (originalTask.status === 'CLOSED' && (finalUpdatedTask.status === 'OPEN' || finalUpdatedTask.status === 'WIP')) {
+            const dependentTasks = newTasks.filter(t => t.dependencyId === finalUpdatedTask.id);
+            dependentTasks.forEach(depTask => {
+                if (depTask.status === 'CLOSED') {
+                    newTasks = newTasks.map(t => {
+                        if (t.id === depTask.id) {
+                            logStore.add({
+                                taskId: t.id,
+                                taskName: t.name,
+                                projectId: prevProject.id,
+                                projectName: prevProject.name,
+                                previousStatus: 'CLOSED',
+                                newStatus: 'OPEN',
+                                changedBy: changedById,
+                            });
+                            const newRevision = (t.revision || 0) + 1;
+                            return { ...t, status: 'OPEN' as TaskStatus, revision: newRevision };
+                        }
+                        return t;
+                    });
+                }
+            });
+        }
 
-    setProject(prev => ({ ...prev, tasks: newTasks }));
+        if (statusChanged) {
+            logStore.add({
+                taskId: originalTask.id,
+                taskName: originalTask.name,
+                projectId: prevProject.id,
+                projectName: prevProject.name,
+                previousStatus: originalTask.status,
+                newStatus: finalUpdatedTask.status,
+                changedBy: changedById,
+            });
+        }
+        
+        toast({ title: "Task Updated", description: `Task "${finalUpdatedTask.name}" has been successfully updated.` });
 
-    toast({ title: "Task Updated", description: `Task "${finalUpdatedTask.name}" has been successfully updated.` });
+        return { ...prevProject, tasks: newTasks };
+    });
   };
 
 
@@ -233,89 +232,10 @@ export function TaskSection({ initialProject, allMembers }: TaskSectionProps) {
     toast({ title: "CSV Exported", description: `Log for project "${project.name}" has been downloaded.` });
   }
 
-  const exportToPDF = async () => {
-    setIsPdfLoading(true);
-    const reportRoot = document.createElement('div');
-    reportRoot.style.position = 'absolute';
-    reportRoot.style.left = '-9999px';
-    document.body.appendChild(reportRoot);
-    const root = createRoot(reportRoot);
-
-    try {
-        const blockedTasks = project.tasks.filter(task => {
-            if (!task.dependencyId) return false;
-            const dependency = project.tasks.find(d => d.id === task.dependencyId);
-            return dependency && (dependency.status === 'OPEN' || dependency.status === 'WIP');
-        }).map(task => {
-            const dependency = project.tasks.find(d => d.id === task.dependencyId)!;
-            const assignedToDependency = allMembers
-                .filter(m => dependency.assignedTo.includes(m.id))
-                .map(m => m.name)
-                .join(", ");
-            return `"${task.name}" is blocked by "${dependency.name}" (assigned to: ${assignedToDependency})`;
-        });
-
-        const taskStatuses = project.tasks.map(t => t.status);
-
-        const aiSummary = await summarizeProject({
-            projectName: project.name,
-            projectStage: project.stage,
-            taskStatuses: taskStatuses,
-            blockedTasks: blockedTasks,
-        });
-
-        await new Promise<void>((resolve) => {
-          root.render(
-            <ProjectReport 
-              project={project} 
-              allMembers={allMembers}
-              aiSummary={aiSummary} 
-              onRendered={() => resolve()}
-            />
-          );
-        });
-
-        const reportElement = reportRoot.children[0] as HTMLElement;
-        const canvas = await html2canvas(reportElement, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-
-        const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'px',
-            format: [canvas.width, canvas.height]
-        });
-
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-        pdf.save(`project_summary_${project.name.replace(/\s+/g, '_')}.pdf`);
-        
-        toast({ title: "PDF Exported", description: "Project summary has been downloaded."});
-    } catch(e) {
-        console.error("PDF Export Error: ", e);
-        toast({ title: "Export Failed", description: "Could not generate PDF report.", variant: "destructive"});
-    } finally {
-        root.unmount();
-        document.body.removeChild(reportRoot);
-        setIsPdfLoading(false);
-    }
-  }
-
   return (
     <div>
       <DependencyAlert allTasks={project.tasks} allMembers={allMembers} />
-      <div className="flex items-center justify-end gap-2 mb-6">
-        <Button variant="outline" onClick={exportToPDF} disabled={isPdfLoading} className="h-auto py-2">
-            <div className="flex items-center gap-2">
-                {isPdfLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                    <FileText className="h-4 w-4" />
-                )}
-                <div className="flex flex-col items-start text-left">
-                    <span>Export Project Summary</span>
-                    <span className="text-xs text-muted-foreground -mt-0.5">PDF Copy</span>
-                </div>
-            </div>
-        </Button>
+      <div className="flex items-center justify-end gap-2 mb-6 mt-8">
         <Button variant="outline" onClick={exportToCSV}>
             <FileDown className="mr-2 h-4 w-4" />
             Export CSV
