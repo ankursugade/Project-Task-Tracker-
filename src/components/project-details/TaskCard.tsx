@@ -202,18 +202,18 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                   </TooltipProvider>
                   <div className="flex items-center gap-2 mt-2 sm:mt-0">
                       <Popover open={isMemberPopoverOpen} onOpenChange={setMemberPopoverOpen}>
-                        <PopoverTrigger asChild>
                           <Select onValueChange={handleStatusSelect} value={task.status}>
-                              <SelectTrigger className="w-full md:w-[150px]">
-                                  <SelectValue placeholder="Change status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="OPEN">Open</SelectItem>
-                                  <SelectItem value="WIP">In Progress</SelectItem>
-                                  <SelectItem value="CLOSED">Closed</SelectItem>
-                              </SelectContent>
+                            <PopoverTrigger asChild>
+                                <SelectTrigger className="w-full md:w-[150px]">
+                                    <SelectValue placeholder="Change status" />
+                                </SelectTrigger>
+                            </PopoverTrigger>
+                            <SelectContent>
+                                <SelectItem value="OPEN">Open</SelectItem>
+                                <SelectItem value="WIP">In Progress</SelectItem>
+                                <SelectItem value="CLOSED">Closed</SelectItem>
+                            </SelectContent>
                           </Select>
-                        </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="end">
                             <div className="p-2 space-y-2">
                                 <Label className="text-xs px-1 font-semibold">Who is changing the status?</Label>
