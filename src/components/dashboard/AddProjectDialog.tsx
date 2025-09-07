@@ -12,28 +12,35 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PROJECTS, MEMBERS } from "@/lib/data";
+import { MEMBERS } from "@/lib/data";
 import type { Project, ProjectStage, Member } from "@/lib/types";
 import { MemberCombobox } from "../shared/MemberCombobox";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddProjectDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   onProjectAdd: (project: Project) => void;
+  projects: Project[]; // Receive the current list of projects
 }
 
 const projectStages: ProjectStage[] = ["Pitch", "Design", "Construction", "Handover"];
 
-export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd }: AddProjectDialogProps) {
+export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd, projects }: AddProjectDialogProps) {
   const [name, setName] = useState("");
   const [stage, setStage] = useState<ProjectStage>("Pitch");
   const [projectLead, setProjectLead] = useState<string>("");
   const [designCaptain, setDesignCaptain] = useState<string>("");
   const [copyFrom, setCopyFrom] = useState<string>("");
+  const { toast } = useToast();
 
   const handleSubmit = () => {
     if (!name || !projectLead || !designCaptain) {
-      // Basic validation
+      toast({
+        title: "Missing Information",
+        description: "Please fill out the Name, Project Lead, and Design Captain fields.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -43,7 +50,7 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd }: AddProject
       stage,
       projectLead,
       designCaptain,
-      tasks: copyFrom ? PROJECTS.find(p => p.id === copyFrom)?.tasks.map(t => ({...t, id: `task-${Date.now()}-${Math.random()}`, assignedTo: []})) || [] : [],
+      tasks: copyFrom ? projects.find(p => p.id === copyFrom)?.tasks.map(t => ({...t, id: `task-${Date.now()}-${t.id}`, assignedTo: []})) || [] : [],
     };
     onProjectAdd(newProject);
     setIsOpen(false);
@@ -101,7 +108,7 @@ export function AddProjectDialog({ isOpen, setIsOpen, onProjectAdd }: AddProject
                 <SelectValue placeholder="Optional: copy from..." />
               </SelectTrigger>
               <SelectContent>
-                {PROJECTS.map((p) => (
+                {projects.map((p) => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
               </SelectContent>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -135,6 +136,7 @@ export function ProjectSection() {
         isOpen={isAddProjectOpen}
         setIsOpen={setAddProjectOpen}
         onProjectAdd={(newProject) => setProjects((p) => [newProject, ...p])}
+        projects={projects}
       />
     </section>
   );
