@@ -77,7 +77,7 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
 
         return (
             <AccordionItem value={coreTask.id} key={coreTask.id} className="border-none">
-              <Card className="data-[state=open]:rounded-b-none transition-all">
+              <Card className="data-[state=open]:rounded-b-none transition-all data-[state=open]:ring-2 data-[state=open]:ring-primary">
                  <AccordionTrigger className="p-0 hover:no-underline w-full flex">
                      <CardHeader className="w-full">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
