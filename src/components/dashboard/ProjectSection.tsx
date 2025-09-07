@@ -84,7 +84,7 @@ export function ProjectSection() {
     <section>
        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
         <button onClick={clearFilters} className="text-left hover:opacity-80 transition-opacity">
-          <h2 className="text-2xl font-bold tracking-tight font-headline">
+          <h2 className="text-2xl tracking-tight">
             Projects Dashboard
           </h2>
         </button>
