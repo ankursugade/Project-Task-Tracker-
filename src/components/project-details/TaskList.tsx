@@ -40,21 +40,23 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
         const subTasks = subTasksByParentId[coreTask.id] || [];
         return (
           <AccordionItem value={coreTask.id} key={coreTask.id} className="border-none">
-             <TaskCard
-              task={coreTask}
-              allTasks={allTasks}
-              allMembers={allMembers}
-              onTaskUpdate={onTaskUpdate}
-              onSubtaskAdd={onSubtaskAdd}
-              onEdit={onEdit}
-              showProjectName={showProjectName}
-              isCoreTask={true}
-              subtaskCount={subTasks.length}
-            >
-                <AccordionTrigger className="w-8 h-8 p-1 absolute right-2 top-1/2 -translate-y-1/2 rounded-md hover:bg-accent [&[data-state=open]>svg]:rotate-180">
+             <AccordionTrigger className="w-full p-0 rounded-md hover:no-underline [&[data-state=open]>div>svg]:rotate-180 disabled:cursor-default" disabled={subTasks.length === 0}>
+              <TaskCard
+                task={coreTask}
+                allTasks={allTasks}
+                allMembers={allMembers}
+                onTaskUpdate={(task, changedById) => onTaskUpdate(task, changedById)}
+                onSubtaskAdd={(parentId) => onSubtaskAdd(parentId)}
+                onEdit={(task) => onEdit(task)}
+                showProjectName={showProjectName}
+                isCoreTask={true}
+                subtaskCount={subTasks.length}
+              >
+                 <div className="w-8 h-8 p-1 absolute right-2 top-1/2 -translate-y-1/2 rounded-md hover:bg-accent flex items-center justify-center">
                     {subTasks.length > 0 && <ChevronsUpDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
-                </AccordionTrigger>
-            </TaskCard>
+                </div>
+              </TaskCard>
+            </AccordionTrigger>
             {subTasks.length > 0 && (
                 <AccordionContent className="pt-0">
                     <div className="pl-8 mt-2 space-y-2 border-l-2 border-dashed ml-7">
@@ -80,4 +82,3 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
     </Accordion>
   );
 }
-

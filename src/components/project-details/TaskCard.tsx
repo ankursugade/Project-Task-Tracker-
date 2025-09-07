@@ -56,6 +56,10 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
     onTaskUpdate({ ...task, status: newStatus }, changedBy);
   };
 
+  const stopPropagation = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Card className={cn("transition-all duration-300 relative", 
         isBlocked && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800",
@@ -83,7 +87,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
         </div>
         <CardDescription>{task.description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4" onClick={stopPropagation}>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4"/>
@@ -198,4 +202,3 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
     </Card>
   );
 }
-
