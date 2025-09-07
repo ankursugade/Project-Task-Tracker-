@@ -172,7 +172,7 @@ export function ProjectSection() {
         <div className="flex items-center gap-2">
           <Button onClick={exportToPDF} disabled={isPdfLoading} variant="outline">
               {isPdfLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-              Export All
+              export summary as PDF
           </Button>
            <ToggleGroup type="single" value={view} onValueChange={(value) => {if (value) setView(value as "grid" | "list")}}>
             <ToggleGroupItem value="grid" aria-label="Grid view">
