@@ -31,7 +31,6 @@ export function AddMemberDialog({ isOpen, setIsOpen, onMemberAdd }: AddMemberDia
     const newMember: Member = {
       id: `mem-${Date.now()}`,
       name,
-      avatarUrl: `https://picsum.photos/seed/${name.split(' ')[0]}/40/40`,
     }
 
     onMemberAdd(newMember);

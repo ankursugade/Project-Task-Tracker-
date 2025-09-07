@@ -43,7 +43,6 @@ export function ProjectListItem({ project }: ProjectListItemProps) {
                     <Tooltip>
                         <TooltipTrigger>
                         <Avatar className="border-2 border-background">
-                            <AvatarImage src={lead.avatarUrl} alt={lead.name} />
                             <AvatarFallback>{lead.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         </TooltipTrigger>
@@ -56,7 +55,6 @@ export function ProjectListItem({ project }: ProjectListItemProps) {
                     <Tooltip>
                         <TooltipTrigger>
                         <Avatar className="border-2 border-background">
-                            <AvatarImage src={captain.avatarUrl} alt={captain.name} />
                             <AvatarFallback>{captain.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         </TooltipTrigger>

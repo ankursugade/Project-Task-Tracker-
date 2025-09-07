@@ -57,7 +57,6 @@ export function ProjectDetailHeader({ project, allMembers, onExportPDF, isPdfLoa
                 <Tooltip>
                   <TooltipTrigger>
                     <Avatar className="border-2 border-background">
-                      <AvatarImage src={lead.avatarUrl} alt={lead.name} data-ai-hint="person face"/>
                       <AvatarFallback>{lead.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </TooltipTrigger>
@@ -70,7 +69,6 @@ export function ProjectDetailHeader({ project, allMembers, onExportPDF, isPdfLoa
                <Tooltip>
                  <TooltipTrigger>
                    <Avatar className="border-2 border-background">
-                     <AvatarImage src={captain.avatarUrl} alt={captain.name} data-ai-hint="person face" />
                      <AvatarFallback>{captain.name.charAt(0)}</AvatarFallback>
                    </Avatar>
                  </TooltipTrigger>

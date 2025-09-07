@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect } from 'react';
 import type { Project, Member } from '@/lib/types';
@@ -63,14 +64,14 @@ export function ProjectReport({ project, allMembers, aiSummary, onRendered }: Pr
           <div className="p-4 rounded-lg bg-card border">
             <h3 className="font-semibold text-muted-foreground mb-2">Project Lead</h3>
             <div className="flex items-center gap-2">
-              {lead && <Avatar className="h-8 w-8"><AvatarImage src={lead.avatarUrl} /><AvatarFallback>{lead.name[0]}</AvatarFallback></Avatar>}
+              {lead && <Avatar className="h-8 w-8"><AvatarFallback>{lead.name[0]}</AvatarFallback></Avatar>}
               <span className="font-medium">{lead?.name || 'N/A'}</span>
             </div>
           </div>
           <div className="p-4 rounded-lg bg-card border">
             <h3 className="font-semibold text-muted-foreground mb-2">Design Captain</h3>
             <div className="flex items-center gap-2">
-              {captain && <Avatar className="h-8 w-8"><AvatarImage src={captain.avatarUrl} /><AvatarFallback>{captain.name[0]}</AvatarFallback></Avatar>}
+              {captain && <Avatar className="h-8 w-8"><AvatarFallback>{captain.name[0]}</AvatarFallback></Avatar>}
               <span className="font-medium">{captain?.name || 'N/A'}</span>
             </div>
           </div>

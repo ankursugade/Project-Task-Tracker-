@@ -20,7 +20,6 @@ export function MemberListItem({ member, openTasks, dueTodayTasks }: MemberListI
         <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
             <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={member.avatarUrl} alt={member.name} data-ai-hint="person portrait" />
                     <AvatarFallback>{member.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                 </Avatar>
                 <div>

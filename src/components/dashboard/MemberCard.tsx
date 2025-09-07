@@ -22,7 +22,6 @@ export function MemberCard({ member, openTasks, dueTodayTasks }: MemberCardProps
       <Card className="hover:shadow-md transition-shadow h-full">
         <CardHeader className="flex flex-row items-center gap-4">
           <Avatar className="h-12 w-12">
-            <AvatarImage src={member.avatarUrl} alt={member.name} data-ai-hint="person portrait" />
             <AvatarFallback>{member.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
           </Avatar>
           <div>

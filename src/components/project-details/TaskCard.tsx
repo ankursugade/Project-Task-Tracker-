@@ -182,7 +182,6 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                   {assignedMembers.map(member => (
                       <div key={member.id} className="flex items-center gap-1.5">
                           <Avatar className="h-6 w-6 border-2 border-card">
-                              <AvatarImage src={member.avatarUrl} alt={member.name} data-ai-hint="person face" />
                               <AvatarFallback>{member.name[0]}</AvatarFallback>
                           </Avatar>
                           <span className="text-xs">{member.name}</span>
@@ -231,7 +230,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                                <CommandGroup heading="Assigned Members">
                                  {assignedMembers.map((member) => (
                                     <CommandItem key={member.id} value={member.name} onSelect={() => handleMemberSelect(member.id)}>
-                                        <Avatar className="h-6 w-6 mr-2"><AvatarImage src={member.avatarUrl} /><AvatarFallback>{member.name[0]}</AvatarFallback></Avatar>
+                                        <Avatar className="h-6 w-6 mr-2"><AvatarFallback>{member.name[0]}</AvatarFallback></Avatar>
                                         {member.name}
                                     </CommandItem>
                                   ))}
@@ -247,7 +246,7 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                                      <CommandGroup heading="All Members">
                                         {allMembers.map((member) => (
                                             <CommandItem key={member.id} value={member.name} onSelect={() => handleMemberSelect(member.id)}>
-                                                <Avatar className="h-6 w-6 mr-2"><AvatarImage src={member.avatarUrl} /><AvatarFallback>{member.name[0]}</AvatarFallback></Avatar>
+                                                <Avatar className="h-6 w-6 mr-2"><AvatarFallback>{member.name[0]}</AvatarFallback></Avatar>
                                                 {member.name}
                                             </CommandItem>
                                         ))}

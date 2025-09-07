@@ -7,7 +7,6 @@ import type { Member, Project, Task, ProjectStage, TaskStatus } from '@/lib/type
 export const MEMBERS: Member[] = Array.from({ length: 18 }, (_, i) => ({
   id: `mem-${i + 1}`,
   name: `Member ${i + 1}`,
-  avatarUrl: `https://picsum.photos/seed/member${i + 1}/40/40`,
 }));
 
 const projectLeadIds = ['mem-1', 'mem-2', 'mem-3'];

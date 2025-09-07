@@ -1,7 +1,8 @@
+
 export type Member = {
   id: string;
   name: string;
-  avatarUrl: string;
+  avatarUrl?: string;
 };
 
 export type TaskStatus = 'OPEN' | 'WIP' | 'CLOSED';

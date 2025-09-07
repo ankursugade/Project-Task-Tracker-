@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -68,7 +69,6 @@ export function MemberCombobox({ members, selectedMember, setSelectedMember, pla
                     )}
                   />
                    <Avatar className="h-6 w-6 mr-2">
-                      <AvatarImage src={member.avatarUrl} alt={member.name} />
                       <AvatarFallback>{member.name[0]}</AvatarFallback>
                     </Avatar>
                   {member.name}

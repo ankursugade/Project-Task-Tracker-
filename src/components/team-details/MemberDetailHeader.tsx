@@ -20,7 +20,6 @@ export function MemberDetailHeader({ member }: MemberDetailHeaderProps) {
       </Button>
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
-            <AvatarImage src={member.avatarUrl} alt={member.name} data-ai-hint="person face" />
             <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
         </Avatar>
         <div>
