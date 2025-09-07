@@ -23,6 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Label } from '../ui/label';
 import { MemberCombobox } from '../shared/MemberCombobox';
 import { Badge } from '../ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskCardProps {
   task: Task;
@@ -39,7 +40,10 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAdd, onEdit, showProjectName = true, isSubTask = false, isAccordionTrigger = false, hideDescription = false, overrideAssignedMembers }: TaskCardProps) {
-  const [changedBy, setChangedBy] = useState("");
+  const [isMemberPopoverOpen, setMemberPopoverOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<TaskStatus | null>(null);
+  const { toast } = useToast();
+
   const assignedMembers = overrideAssignedMembers ?? allMembers.filter(m => task.assignedTo.includes(m.id));
   const assigner = allMembers.find(m => m.id === task.assignedBy);
 
@@ -52,15 +56,28 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
   const isBlocking = dependentTasks.length > 0 && task.status !== 'CLOSED';
 
   const subtaskCount = allTasks.filter(t => t.parentId === task.id).length;
-
-  const handleStatusChange = (newStatus: TaskStatus) => {
-    if (!changedBy) {
-        alert("Please select who is changing the status.");
-        return;
-    }
-    onTaskUpdate({ ...task, status: newStatus }, changedBy);
-  };
   
+  const handleStatusSelect = (newStatus: TaskStatus) => {
+    if (newStatus !== task.status) {
+      setSelectedStatus(newStatus);
+      setMemberPopoverOpen(true);
+    }
+  }
+
+  const handleMemberSelect = (memberId: string) => {
+    if (selectedStatus && memberId) {
+      onTaskUpdate({ ...task, status: selectedStatus }, memberId);
+      setMemberPopoverOpen(false);
+      setSelectedStatus(null);
+    } else {
+        toast({
+            title: "Selection required",
+            description: "You must select a member to change the task status.",
+            variant: "destructive"
+        });
+    }
+  }
+
   return (
      <Card className={cn("transition-all duration-300 w-full group", 
         isBlocked && "bg-orange-50 border-orange-400 ring-2 ring-orange-200 dark:bg-orange-950 dark:border-orange-700 dark:ring-orange-800",
@@ -184,27 +201,31 @@ export function TaskCard({ task, allTasks, allMembers, onTaskUpdate, onSubtaskAd
                     </Tooltip>
                   </TooltipProvider>
                   <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                      <Popover>
-                          <PopoverTrigger asChild>
-                              <Button variant="outline" size="sm">Changed by: {allMembers.find(m=>m.id===changedBy)?.name || "Select..."}</Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                              <div className="p-2">
-                                  <Label className="text-xs px-1">Who is changing status?</Label>
-                                  <MemberCombobox members={allMembers} selectedMember={changedBy} setSelectedMember={setChangedBy} />
-                              </div>
-                          </PopoverContent>
+                      <Popover open={isMemberPopoverOpen} onOpenChange={setMemberPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <Select onValueChange={handleStatusSelect} value={task.status}>
+                              <SelectTrigger className="w-full md:w-[150px]">
+                                  <SelectValue placeholder="Change status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="OPEN">Open</SelectItem>
+                                  <SelectItem value="WIP">In Progress</SelectItem>
+                                  <SelectItem value="CLOSED">Closed</SelectItem>
+                              </SelectContent>
+                          </Select>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                            <div className="p-2 space-y-2">
+                                <Label className="text-xs px-1 font-semibold">Who is changing the status?</Label>
+                                <MemberCombobox 
+                                    members={allMembers} 
+                                    selectedMember={""} 
+                                    setSelectedMember={handleMemberSelect} 
+                                    placeholder="Select member..."
+                                />
+                            </div>
+                        </PopoverContent>
                       </Popover>
-                      <Select onValueChange={handleStatusChange} value={task.status}>
-                          <SelectTrigger className="w-full md:w-[150px]">
-                              <SelectValue placeholder="Change status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="OPEN">Open</SelectItem>
-                              <SelectItem value="WIP">In Progress</SelectItem>
-                              <SelectItem value="CLOSED">Closed</SelectItem>
-                          </SelectContent>
-                      </Select>
                   </div>
               </div>
           </div>
