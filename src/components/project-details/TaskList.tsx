@@ -4,14 +4,8 @@ import { TaskCard } from "./TaskCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { StatusBadge } from "../shared/StatusBadge";
-import { Briefcase, ChevronsUpDown } from "lucide-react";
-import { projectStore } from "@/lib/store";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
+import { ChevronsUpDown } from "lucide-react";
 
 
 interface TaskListProps {
@@ -66,8 +60,6 @@ export function TaskList({ tasks, allTasks, allMembers, onTaskUpdate, onSubtaskA
                  />
             )
         }
-
-        const project = showProjectName ? projectStore.getProjects().find(p => p.tasks.some(t => t.id === coreTask.id)) : undefined;
 
         return (
             <AccordionItem value={coreTask.id} key={coreTask.id} className="border-none">
